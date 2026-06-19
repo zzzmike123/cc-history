@@ -1,11 +1,50 @@
 """数据解析模块：读取 Claude Code 的会话历史文件。"""
 
 import json
+import os
 from pathlib import Path
 
-CLAUDE_DIR = Path.home() / ".claude"
-HISTORY_FILE = CLAUDE_DIR / "history.jsonl"
-PROJECTS_DIR = CLAUDE_DIR / "projects"
+CONFIG_FILE = Path.home() / ".cc-history.json"
+
+
+def _default_claude_dir():
+    return Path.home() / ".claude"
+
+
+def load_settings():
+    """加载应用设置。"""
+    defaults = {
+        "claude_dir": str(_default_claude_dir()),
+        "theme": "light",
+    }
+    if CONFIG_FILE.exists():
+        try:
+            saved = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+            defaults.update(saved)
+        except Exception:
+            pass
+    env_dir = os.environ.get("CLAUDE_DIR")
+    if env_dir:
+        defaults["claude_dir"] = env_dir
+    return defaults
+
+
+def save_settings(settings):
+    """保存应用设置。"""
+    CONFIG_FILE.write_text(json.dumps(settings, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def get_claude_dir():
+    """获取当前 .claude 目录路径。"""
+    return Path(load_settings()["claude_dir"])
+
+
+def _get_projects_dir():
+    return get_claude_dir() / "projects"
+
+
+def _get_history_file():
+    return get_claude_dir() / "history.jsonl"
 
 
 def _read_jsonl(path):
@@ -26,15 +65,16 @@ def _read_jsonl(path):
 
 def get_custom_names_path():
     """返回自定义名称文件路径（存在用户目录下）"""
-    return CLAUDE_DIR / "cc-history-names.json"
+    return get_claude_dir() / "cc-history-names.json"
 
 
 def parse_history():
     """解析 history.jsonl，返回所有用户消息。"""
     messages = []
-    if not HISTORY_FILE.exists():
+    history_file = _get_history_file()
+    if not history_file.exists():
         return messages
-    for obj in _read_jsonl(HISTORY_FILE):
+    for obj in _read_jsonl(history_file):
         messages.append(obj)
     return messages
 
@@ -71,13 +111,14 @@ def _extract_content(msg_data):
 def get_sessions():
     """扫描 projects 目录，返回所有会话信息。"""
     sessions = []
-    if not PROJECTS_DIR.exists():
+    projects_dir = _get_projects_dir()
+    if not projects_dir.exists():
         return sessions
 
     path_map = get_real_project_paths()
 
     try:
-        project_dirs = list(PROJECTS_DIR.iterdir())
+        project_dirs = list(projects_dir.iterdir())
     except OSError:
         return sessions
 

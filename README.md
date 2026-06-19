@@ -36,10 +36,30 @@ pip install -e .
 cc-history
 ```
 
-或者：
+### 命令行参数
 
 ```bash
-python -m cc_history.app
+# 指定 .claude 数据目录（聊天记录不在默认位置时）
+cc-history --data-dir /path/to/.claude
+
+# 指定端口
+cc-history --port 8080
+
+# 仅启动服务，不打开窗口
+cc-history --no-window
+
+# 查看帮助
+cc-history --help
+```
+
+### 环境变量
+
+```bash
+# Linux/macOS
+CLAUDE_DIR=/path/to/.claude cc-history
+
+# Windows PowerShell
+$env:CLAUDE_DIR="D:\other\.claude"; cc-history
 ```
 
 ## 快捷键

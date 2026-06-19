@@ -35,6 +35,30 @@
   --radius-lg: 14px;
 }
 
+[data-theme="dark"] {
+  --bg-page: #0D1117;
+  --bg-card: #161B22;
+  --bg-sidebar: #161B22;
+  --bg-hover: #1C2333;
+  --bg-active: #1C3A5E;
+  --bg-subtle: #1C2333;
+  --border: #30363D;
+  --border-light: #21262D;
+  --text-primary: #E6EDF3;
+  --text-secondary: #8B949E;
+  --text-muted: #6E7681;
+  --accent: #22D3EE;
+  --accent-light: #164E63;
+  --accent-dark: #06B6D4;
+  --user-bg: #0E7490;
+  --user-text: #CFFAFE;
+  --assistant-bg: #1C2333;
+  --assistant-text: #E6EDF3;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
@@ -597,6 +621,92 @@ body {
 /* Custom name styling */
 .session-name { font-size: 12px; color: var(--text-primary); font-weight: 500; }
 .session-original { font-size: 11px; color: var(--text-muted); }
+
+/* Settings button */
+.btn-settings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-app-region: no-drag;
+  flex-shrink: 0;
+}
+.btn-settings:hover { background: var(--bg-hover); color: var(--text-primary); }
+.btn-settings svg { width: 16px; height: 16px; }
+
+/* Settings dialog */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(2px);
+}
+.settings-overlay.show { display: flex; }
+.settings-dialog {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 24px;
+  width: 420px;
+  max-width: 90vw;
+}
+.settings-dialog h3 { font-size: 16px; font-weight: 600; margin-bottom: 20px; color: var(--text-primary); }
+.setting-group { margin-bottom: 16px; }
+.setting-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block; }
+.setting-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.setting-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--bg-page);
+}
+.setting-input:focus { outline: none; border-color: var(--accent); }
+
+.theme-switcher {
+  display: flex;
+  gap: 8px;
+}
+.theme-btn {
+  flex: 1;
+  padding: 10px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.theme-btn:hover { border-color: var(--text-muted); }
+.theme-btn.active { border-color: var(--accent); background: var(--accent-light); }
+.theme-btn .theme-preview {
+  width: 100%;
+  height: 40px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.theme-btn .theme-preview.light-preview { background: linear-gradient(135deg, #F8FAFB 50%, #FFFFFF 50%); }
+.theme-btn .theme-preview.dark-preview { background: linear-gradient(135deg, #0D1117 50%, #161B22 50%); }
+.theme-btn .theme-name { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+
+.settings-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 </style>
 </head>
 <body>
@@ -613,6 +723,9 @@ body {
     <input type="text" id="searchInput" placeholder="搜索消息... (Ctrl+K)" oninput="debounceSearch()" onkeydown="if(event.key==='Escape'){this.value='';doSearch()}">
   </div>
   <div class="stats" id="stats"></div>
+  <button class="btn-settings" onclick="openSettings()" title="设置">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+  </button>
 </div>
 
 <div class="main">
@@ -652,6 +765,34 @@ body {
     <div class="btns">
       <button class="btn" onclick="closeRename()">取消</button>
       <button class="btn btn-primary" onclick="confirmRename()">确认</button>
+    </div>
+  </div>
+</div>
+
+<div class="settings-overlay" id="settingsOverlay">
+  <div class="settings-dialog">
+    <h3>设置</h3>
+    <div class="setting-group">
+      <label class="setting-label">数据目录</label>
+      <input type="text" class="setting-input" id="settingClaudeDir" placeholder="~/.claude">
+      <div class="setting-hint">Claude Code 的 .claude 目录路径，修改后需重启应用</div>
+    </div>
+    <div class="setting-group">
+      <label class="setting-label">主题</label>
+      <div class="theme-switcher">
+        <div class="theme-btn active" id="themeLight" onclick="selectTheme('light')">
+          <div class="theme-preview light-preview"></div>
+          <span class="theme-name">浅色</span>
+        </div>
+        <div class="theme-btn" id="themeDark" onclick="selectTheme('dark')">
+          <div class="theme-preview dark-preview"></div>
+          <span class="theme-name">深色</span>
+        </div>
+      </div>
+    </div>
+    <div class="settings-btns">
+      <button class="btn" onclick="closeSettings()">取消</button>
+      <button class="btn btn-primary" onclick="saveSettings()">保存</button>
     </div>
   </div>
 </div>
@@ -855,8 +996,68 @@ async function doSearch(){
 
 function debounceSearch(){clearTimeout(searchTimer);searchTimer=setTimeout(doSearch,250);}
 
+// Settings
+let currentSettings = {};
+
+async function loadSettings() {
+  try {
+    const res = await fetch('/api/settings');
+    currentSettings = await res.json();
+    applyTheme(currentSettings.theme || 'light');
+  } catch {}
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeLight').classList.toggle('active', theme === 'light');
+  document.getElementById('themeDark').classList.toggle('active', theme === 'dark');
+}
+
+function selectTheme(theme) {
+  document.getElementById('themeLight').classList.toggle('active', theme === 'light');
+  document.getElementById('themeDark').classList.toggle('active', theme === 'dark');
+}
+
+function openSettings() {
+  document.getElementById('settingClaudeDir').value = currentSettings.claude_dir || '';
+  selectTheme(currentSettings.theme || 'light');
+  document.getElementById('settingsOverlay').classList.add('show');
+}
+
+function closeSettings() {
+  document.getElementById('settingsOverlay').classList.remove('show');
+}
+
+async function saveSettings() {
+  const claudeDir = document.getElementById('settingClaudeDir').value.trim();
+  const theme = document.getElementById('themeDark').classList.contains('active') ? 'dark' : 'light';
+
+  try {
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ claude_dir: claudeDir, theme }),
+    });
+    const data = await res.json();
+    if (data.error) { alert(data.error); return; }
+
+    currentSettings = data.settings;
+    applyTheme(currentSettings.theme);
+    closeSettings();
+
+    // 重新加载数据
+    loadProjects();
+  } catch (e) {
+    alert('保存失败: ' + e.message);
+  }
+}
+
 // 等待页面完全加载后再请求数据
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',()=>setTimeout(loadProjects,100));}else{setTimeout(loadProjects,100);}
+async function initApp() {
+  await loadSettings();
+  await loadProjects();
+}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',()=>setTimeout(initApp,100));}else{setTimeout(initApp,100);}
 
 async function resumeSession(sessionId, encodedRealPath){
   const realPath=decodeURIComponent(encodedRealPath);
@@ -902,10 +1103,23 @@ document.getElementById('ctxReset').addEventListener('click',async()=>{
   document.getElementById('contextMenu').classList.remove('show');
   await fetch('/api/custom-names',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:ctxSessionId,name:''})});
   delete customNames[ctxSessionId];
-  renderProjectList();
+
+  // 只更新当前会话的显示名称
+  const sessEl=document.getElementById('sess-'+ctxSessionId);
+  if(sessEl){
+    const preview=sessEl.querySelector('.session-preview');
+    const origTitle=sessEl.getAttribute('data-orig')||'';
+    if(preview) preview.textContent=origTitle;
+    sessEl.removeAttribute('title');
+  }
+
+  // 更新聊天标题
   if(currentSessionId===ctxSessionId){
-    const sessEl=document.getElementById('sess-'+ctxSessionId);
-    if(sessEl)sessEl.click();
+    const chatTitle=document.querySelector('.chat-title');
+    if(chatTitle){
+      chatTitle.textContent=`会话 ${ctxSessionId.slice(0,8)}`;
+      chatTitle.removeAttribute('title');
+    }
   }
 });
 
@@ -929,11 +1143,31 @@ async function confirmRename(){
   await fetch('/api/custom-names',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:ctxSessionId,name})});
   if(name)customNames[ctxSessionId]=name;
   else delete customNames[ctxSessionId];
-  renderProjectList();
-  // 刷新当前会话标题
+
+  // 只更新当前会话的显示名称，不重新渲染整个列表
+  const sessEl=document.getElementById('sess-'+ctxSessionId);
+  if(sessEl){
+    const preview=sessEl.querySelector('.session-preview');
+    const origTitle=sessEl.getAttribute('data-orig')||'';
+    if(preview){
+      if(name){
+        preview.textContent=name;
+        sessEl.setAttribute('title',origTitle);
+      }else{
+        preview.textContent=origTitle;
+        sessEl.removeAttribute('title');
+      }
+    }
+  }
+
+  // 更新聊天标题
   if(currentSessionId===ctxSessionId){
-    const sessEl=document.getElementById('sess-'+ctxSessionId);
-    if(sessEl)sessEl.click();
+    const chatTitle=document.querySelector('.chat-title');
+    if(chatTitle){
+      const displayTitle=name||`会话 ${ctxSessionId.slice(0,8)}`;
+      chatTitle.textContent=displayTitle;
+      chatTitle.setAttribute('title',name?`原始: 会话 ${ctxSessionId.slice(0,8)}`:'');
+    }
   }
 }
 </script>
