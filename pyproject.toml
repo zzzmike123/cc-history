@@ -35,10 +35,11 @@ cc-history = "cc_history.app:main"
 cc-historyw = "cc_history.app:main_noconsole"
 
 [project.urls]
-Homepage = "https://github.com/nextlevelbuilder/cc-history"
+Homepage = "https://github.com/zzzmike123/cc-history"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
 cc_history = ["templates/*.html"]
+

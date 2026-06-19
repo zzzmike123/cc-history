@@ -14,16 +14,22 @@
 
 ## 安装
 
-### 方式一：pip 安装（推荐）
+### 方式一：下载安装包（Windows 推荐）
+
+从 GitHub Releases 下载 `CC-History-Setup-1.0.0.exe`，双击安装即可。
+
+安装器会自动创建开始菜单项，并可选择创建桌面快捷方式。
+
+### 方式二：pip 安装
 
 ```bash
-pip install git+https://github.com/yourname/cc-history.git
+pip install git+https://github.com/zzzmike123/cc-history.git
 ```
 
-### 方式二：克隆安装
+### 方式三：克隆安装
 
 ```bash
-git clone https://github.com/yourname/cc-history.git
+git clone https://github.com/zzzmike123/cc-history.git
 cd cc-history
 pip install -e .
 ```
@@ -35,6 +41,8 @@ pip install -e .
 ```bash
 cc-history
 ```
+
+Windows 安装包用户可从开始菜单或桌面快捷方式启动 `CC History`。
 
 ### 命令行参数
 
@@ -91,6 +99,34 @@ $env:CLAUDE_DIR="D:\other\.claude"; cc-history
 - Python 3.9+
 - Windows / macOS / Linux
 - Claude Code 已有历史对话数据
+
+下载安装包方式仅面向 Windows；pip / 源码方式可跨平台使用。
+
+## 构建 Windows 安装包
+
+维护者在 Windows 上执行：
+
+```powershell
+.\scripts\build_windows.ps1
+```
+
+脚本会先用 PyInstaller 生成：
+
+```text
+dist\CC History.exe
+```
+
+如果本机安装了 Inno Setup 6，还会继续生成一键安装包：
+
+```text
+installer\output\CC-History-Setup-1.0.0.exe
+```
+
+如果缺少 Inno Setup，可先安装：
+
+```powershell
+winget install JRSoftware.InnoSetup
+```
 
 ## 许可证
 

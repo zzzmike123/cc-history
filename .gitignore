@@ -11,3 +11,4 @@ custom_names.json
 *.lnk
 .DS_Store
 Thumbs.db
+installer/output/
