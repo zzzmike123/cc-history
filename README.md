@@ -9,6 +9,9 @@
 - **全文搜索**：跨所有会话搜索消息关键词
 - **会话重命名**：右键会话可自定义名称，悬浮显示原标题
 - **继续对话**：一键打开 PowerShell 恢复指定会话
+- **收藏会话**：星标收藏重要会话，侧边栏置顶显示
+- **导出会话**：导出为 Markdown 文件，支持选择保存位置
+- **统计面板**：30天趋势、每小时/每周活跃分布、工具使用排行
 - **Markdown 渲染**：代码块、表格、加粗、链接等
 - **原生窗口**：基于 pywebview 的独立桌面窗口，不依赖浏览器
 
@@ -16,7 +19,7 @@
 
 ### 方式一：下载安装包（Windows 推荐）
 
-从 GitHub Releases 下载 `CC-History-Setup-1.0.0.exe`，双击安装即可。
+从 GitHub Releases 下载 `CC-History-Setup-1.1.0.exe`，双击安装即可。
 
 安装器会自动创建开始菜单项，并可选择创建桌面快捷方式。
 
@@ -119,7 +122,7 @@ dist\CC History.exe
 如果本机安装了 Inno Setup 6，还会继续生成一键安装包：
 
 ```text
-installer\output\CC-History-Setup-1.0.0.exe
+installer\output\CC-History-Setup-1.1.0.exe
 ```
 
 如果缺少 Inno Setup，可先安装：

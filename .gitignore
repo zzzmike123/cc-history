@@ -12,3 +12,10 @@ custom_names.json
 .DS_Store
 Thumbs.db
 installer/output/
+
+# 旧图标变体（保留 cat-handmade 作为参考）
+assets/cc-history-claude-kitty-*
+assets/cc-history-kitty-*
+
+# 本地快捷方式脚本（含硬编码路径）
+create_shortcut.bat

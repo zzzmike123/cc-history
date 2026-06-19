@@ -263,6 +263,7 @@ body {
 
 .session-top { display: flex; justify-content: space-between; align-items: center; }
 .session-time { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+.session-right { display: flex; align-items: center; gap: 6px; }
 .session-msgs { font-size: 10px; color: var(--text-muted); background: var(--bg-subtle); padding: 1px 6px; border-radius: 4px; font-weight: 500; }
 .session-preview {
   font-size: 12px;
@@ -332,6 +333,81 @@ body {
 .btn-resume:active { transform: scale(0.97); }
 .btn-resume svg { width: 14px; height: 14px; }
 .btn-resume.loading { opacity: 0.7; pointer-events: none; }
+
+.chat-actions { display: flex; gap: 8px; flex-shrink: 0; margin-top: 2px; }
+.btn-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-action:hover { background: var(--bg-hover); color: var(--text-primary); }
+.btn-action svg { width: 14px; height: 14px; }
+
+.session-fav {
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.15s;
+  user-select: none;
+}
+.session-fav:hover, .session-fav.active { color: #F59E0B; }
+
+/* Stats view */
+.stats-view { padding: 24px; overflow-y: auto; flex: 1; }
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+.stats-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  text-align: center;
+}
+.stats-card-value { font-size: 28px; font-weight: 700; color: var(--accent); }
+.stats-card-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.stats-section { margin-bottom: 24px; }
+.stats-section-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; }
+.stats-bar-item { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.stats-bar-name { font-size: 12px; color: var(--text-secondary); width: 180px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+.stats-bar-track { flex: 1; height: 20px; background: var(--bg-subtle); border-radius: 4px; overflow: hidden; }
+.stats-bar-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.3s; min-width: 2px; }
+.stats-bar-value { font-size: 11px; color: var(--text-muted); width: 50px; flex-shrink: 0; text-align: left; }
+
+/* 30天趋势 */
+.stats-trend { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; }
+.stats-trend-bars { display: flex; align-items: flex-end; gap: 3px; height: 120px; }
+.stats-trend-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+.stats-trend-bar { width: 100%; background: var(--accent); border-radius: 2px 2px 0 0; min-height: 2px; transition: height 0.3s; }
+.stats-trend-label { font-size: 9px; color: var(--text-muted); margin-top: 4px; }
+
+/* 每小时分布 */
+.stats-hours { display: flex; align-items: flex-end; gap: 2px; height: 100px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px 8px 8px; }
+.stats-hour-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+.stats-hour-bar { width: 100%; background: var(--accent); border-radius: 2px 2px 0 0; min-height: 2px; transition: height 0.3s; opacity: 0.8; }
+.stats-hour-label { font-size: 9px; color: var(--text-muted); margin-top: 4px; }
+
+/* 每周分布 */
+.stats-weekdays { display: flex; align-items: flex-end; gap: 8px; height: 100px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px 16px 8px; }
+.stats-weekday-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+.stats-weekday-bar { width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; transition: height 0.3s; }
+.stats-weekday-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+/* 工具使用 */
+.stats-tools { display: flex; flex-direction: column; gap: 8px; }
+.stats-tool-item { display: flex; align-items: center; gap: 12px; }
+.stats-tool-name { font-size: 12px; color: var(--text-secondary); width: 100px; flex-shrink: 0; text-align: right; font-weight: 500; }
+.stats-tool-track { flex: 1; height: 24px; background: var(--bg-subtle); border-radius: 4px; overflow: hidden; }
+.stats-tool-fill { height: 100%; border-radius: 4px; transition: width 0.3s; min-width: 2px; }
+.stats-tool-value { font-size: 12px; color: var(--text-primary); width: 80px; flex-shrink: 0; font-weight: 500; }
 
 /* Messages */
 .messages {
@@ -602,10 +678,10 @@ body {
 .rename-dialog input:focus { outline: none; border-color: var(--accent); }
 .rename-dialog .hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
 .rename-dialog .btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
-.rename-dialog .btn {
-  padding: 6px 14px;
+.btn {
+  padding: 8px 18px;
   border-radius: var(--radius-sm);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
@@ -614,9 +690,9 @@ body {
   color: var(--text-primary);
   transition: all 0.15s;
 }
-.rename-dialog .btn:hover { background: var(--bg-hover); }
-.rename-dialog .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
-.rename-dialog .btn-primary:hover { background: var(--accent-dark); }
+.btn:hover { background: var(--bg-hover); }
+.btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+.btn-primary:hover { background: var(--accent-dark); }
 
 /* Custom name styling */
 .session-name { font-size: 12px; color: var(--text-primary); font-weight: 500; }
@@ -723,6 +799,9 @@ body {
     <input type="text" id="searchInput" placeholder="搜索消息... (Ctrl+K)" oninput="debounceSearch()" onkeydown="if(event.key==='Escape'){this.value='';doSearch()}">
   </div>
   <div class="stats" id="stats"></div>
+  <button class="btn-settings" onclick="showStats()" title="统计">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+  </button>
   <button class="btn-settings" onclick="openSettings()" title="设置">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
   </button>
@@ -802,6 +881,7 @@ let projects = [];
 let searchTimer = null;
 let currentSessionId = null;
 let customNames = {};
+let favorites = {};
 let ctxSessionId = '';
 let ctxSessionName = '';
 
@@ -861,12 +941,14 @@ async function loadProjects() {
   const list = document.getElementById('projectList');
   list.innerHTML = '<div class="loading" id="loadingIndicator"><div class="spinner"></div> 加载中...</div>';
   try {
-    const [loadedProjects, loadedNames] = await Promise.all([
+    const [loadedProjects, loadedNames, loadedFavs] = await Promise.all([
       fetchJson('/api/projects'),
-      fetchJson('/api/custom-names')
+      fetchJson('/api/custom-names'),
+      fetchJson('/api/favorites')
     ]);
     projects = Array.isArray(loadedProjects) ? loadedProjects : [];
     customNames = loadedNames && typeof loadedNames === 'object' ? loadedNames : {};
+    favorites = loadedFavs && typeof loadedFavs === 'object' ? loadedFavs : {};
 
     let ts=0,tm=0;
     for(const p of projects){const ss=Array.isArray(p.sessions)?p.sessions:[];ts+=ss.length;for(const s of ss)tm+=Number(s.messageCount)||0;}
@@ -888,7 +970,54 @@ function renderProjectList(filter='') {
     list.innerHTML='<div class="state-box"><div class="state-title">没有找到历史会话</div><div class="state-desc">请确认 Claude Code 已产生历史记录，或检查 ~/.claude/projects 是否存在。</div></div>';
     return;
   }
+
+  // 收集收藏的会话
+  const favSessions = [];
+  for(const proj of projects){
+    const allSessions=Array.isArray(proj.sessions)?proj.sessions:[];
+    const realPath=String(proj.realPath||proj.name||'');
+    for(const s of allSessions){
+      if(favorites[s.sessionId]){
+        favSessions.push({...s, realPath, projectDir: proj.projectDir||''});
+      }
+    }
+  }
+
   let html='';
+
+  // 收藏分组
+  if(favSessions.length && !lf){
+    html+=`<div class="project-item expanded" id="proj-favorites">
+      <div class="project-header" onclick="toggleProject('favorites')">
+        <div class="project-arrow"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z"/></svg></div>
+        <div class="project-info">
+          <div class="project-name">⭐ 收藏</div>
+          <div class="project-path-text">${favSessions.length} 个会话</div>
+        </div>
+        <span class="project-badge">${favSessions.length}</span>
+      </div>
+      <div class="session-list">`;
+    for(const s of favSessions){
+      const rp=encodeURIComponent(s.realPath);
+      const cn=customNames[s.sessionId];
+      const dispName=cn?escapeHtml(cn):escapeHtml(s.firstMessage);
+      const origTitle=cn?escapeHtml(s.firstMessage):'';
+      const tooltip=cn?`title="${origTitle}"`:'';
+      html+=`<div class="session-item" id="sess-fav-${s.sessionId}" data-realpath="${rp}" data-orig="${escapeHtml(s.firstMessage)}" ${tooltip}>
+        <div class="session-top">
+          <span class="session-time">${formatTime(s.lastTimestamp)}</span>
+          <span class="session-right">
+            <span class="session-fav active" onclick="event.stopPropagation();toggleFavorite('${s.sessionId}')" title="取消收藏">★</span>
+            <span class="session-msgs">${s.messageCount}</span>
+          </span>
+        </div>
+        <div class="session-preview" onclick="loadMessages('${encodeURIComponent(s.projectDir)}','${s.sessionId}','${rp}')">${dispName}</div>
+      </div>`;
+    }
+    html+='</div></div>';
+  }
+
+  // 项目分组
   for(const proj of projects){
     const allSessions=Array.isArray(proj.sessions)?proj.sessions:[];
     const realPath=String(proj.realPath||proj.name||'');
@@ -912,8 +1041,15 @@ function renderProjectList(filter='') {
       const dispName=cn?escapeHtml(cn):escapeHtml(s.firstMessage);
       const origTitle=cn?escapeHtml(s.firstMessage):'';
       const tooltip=cn?`title="${origTitle}"`:'';
+      const isFav=favorites[s.sessionId];
       html+=`<div class="session-item" id="sess-${s.sessionId}" data-realpath="${rp}" data-orig="${escapeHtml(s.firstMessage)}" ${tooltip} onclick="loadMessages('${encodeURIComponent(proj.projectDir||'')}','${s.sessionId}','${rp}')" oncontextmenu="showContextMenu(event,'${s.sessionId}','${escapeHtml(s.firstMessage).replace(/'/g,"\\'")}')">
-        <div class="session-top"><span class="session-time">${formatTime(s.lastTimestamp)}</span><span class="session-msgs">${s.messageCount}</span></div>
+        <div class="session-top">
+          <span class="session-time">${formatTime(s.lastTimestamp)}</span>
+          <span class="session-right">
+            <span class="session-fav ${isFav?'active':''}" onclick="event.stopPropagation();toggleFavorite('${s.sessionId}')" title="${isFav?'取消收藏':'收藏'}">${isFav?'★':'☆'}</span>
+            <span class="session-msgs">${s.messageCount}</span>
+          </span>
+        </div>
         <div class="session-preview">${dispName}</div>
       </div>`;
     }
@@ -921,6 +1057,19 @@ function renderProjectList(filter='') {
   }
   if(!html)html='<div class="search-empty">没有匹配的结果</div>';
   list.innerHTML=html;
+}
+
+async function toggleFavorite(sessionId) {
+  try {
+    const data = await fetchJson('/api/favorites', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({sessionId})
+    });
+    if(data.favorited) favorites[sessionId] = true;
+    else delete favorites[sessionId];
+    renderProjectList();
+  } catch(e) { console.error(e); }
 }
 
 function toggleProject(id){const el=document.getElementById('proj-'+id);if(el)el.classList.toggle('expanded');}
@@ -954,9 +1103,14 @@ async function loadMessages(encodedProjectDir,sessionId,encodedRealPath){
         <span class="chat-meta-item">${iconMsg} ${messages.length} 条消息</span>
       </div>
     </div>
-    <button class="btn-resume" onclick="resumeSession('${sessionId}','${encodeURIComponent(realPath)}')" title="在 PowerShell 中继续此对话">
-      ${iconTerminal} 继续对话
-    </button>
+    <div class="chat-actions">
+      <button class="btn-action" onclick="exportSession('${sessionId}')" title="导出为 Markdown">
+        ${iconExport} 导出
+      </button>
+      <button class="btn-resume" onclick="resumeSession('${sessionId}','${encodeURIComponent(realPath)}')" title="在 PowerShell 中继续此对话">
+        ${iconTerminal} 继续对话
+      </button>
+    </div>
   </div><div class="messages">`;
   for(const msg of messages){
     const av=msg.role==='user'?iconUser:iconBot;
@@ -1078,7 +1232,156 @@ async function resumeSession(sessionId, encodedRealPath){
   }
 }
 
+async function exportSession(sessionId) {
+  try {
+    const res = await fetch(`/api/export?sessionId=${encodeURIComponent(sessionId)}`);
+    if (!res.ok) throw new Error('导出失败');
+    const content = await res.text();
+    const filename = `session-${sessionId.slice(0,8)}.md`;
+
+    // 优先用 pywebview 原生保存对话框
+    if (window.pywebview && window.pywebview.api) {
+      const result = await window.pywebview.api.save_file(filename, content);
+      if (result.ok) {
+        alert('导出成功！\n' + result.path);
+        return;
+      }
+      // 用户取消了对话框
+      return;
+    }
+
+    // 回退：浏览器下载
+    const blob = new Blob([content], {type: 'text/markdown'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    alert('导出失败: ' + e.message);
+  }
+}
+
+async function showStats() {
+  const content = document.getElementById('content');
+  content.innerHTML = '<div class="loading"><div class="spinner"></div> 加载统计...</div>';
+  try {
+    const stats = await fetchJson('/api/stats');
+
+    // 工具使用总数
+    const toolTotal = Object.values(stats.toolUsage || {}).reduce((a, b) => a + b, 0);
+    const toolColors = ['#0891B2', '#06B6D4', '#22D3EE', '#67E8F9', '#A5F3FC', '#CFFAFE', '#164E63', '#155E75', '#0E7490', '#0C4A6E'];
+
+    let html = `<div class="stats-view">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h2 style="font-size:18px;font-weight:700;color:var(--text-primary)">统计面板</h2>
+        <button class="btn-action" onclick="document.getElementById('content').innerHTML='<div class=\\'content-empty\\'><svg viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><path d=\\'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\\'></path></svg><div class=\\'content-empty-text\\'>选择一个会话开始查看</div></div>'">${iconBack} 返回</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stats-card"><div class="stats-card-value">${stats.totalProjects}</div><div class="stats-card-label">项目</div></div>
+        <div class="stats-card"><div class="stats-card-value">${stats.totalSessions}</div><div class="stats-card-label">会话</div></div>
+        <div class="stats-card"><div class="stats-card-value">${stats.totalMessages}</div><div class="stats-card-label">消息</div></div>
+      </div>
+
+      <!-- 30天趋势 -->
+      <div class="stats-section">
+        <div class="stats-section-title">最近 30 天消息趋势</div>
+        <div class="stats-trend">
+          <div class="stats-trend-bars">`;
+
+    const maxTrend = Math.max(...stats.trend.map(d => d.count), 1);
+    for (const d of stats.trend) {
+      const h = Math.max(2, Math.round((d.count / maxTrend) * 100));
+      const day = d.date.slice(5); // MM-DD
+      html += `<div class="stats-trend-col" title="${d.date}: ${d.count}条">
+        <div class="stats-trend-bar" style="height:${h}%"></div>
+        <div class="stats-trend-label">${day.slice(-2)}</div>
+      </div>`;
+    }
+
+    html += `</div></div></div>
+
+      <!-- 每小时分布 -->
+      <div class="stats-section">
+        <div class="stats-section-title">每小时活跃分布</div>
+        <div class="stats-hours">`;
+
+    const maxHour = Math.max(...stats.hourly, 1);
+    for (let h = 0; h < 24; h++) {
+      const pct = Math.round((stats.hourly[h] / maxHour) * 100);
+      html += `<div class="stats-hour-col">
+        <div class="stats-hour-bar" style="height:${Math.max(2, pct)}%"></div>
+        <div class="stats-hour-label">${h}</div>
+      </div>`;
+    }
+
+    html += `</div></div>
+
+      <!-- 每周分布 -->
+      <div class="stats-section">
+        <div class="stats-section-title">每周活跃分布</div>
+        <div class="stats-weekdays">`;
+
+    const weekNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    const maxWeek = Math.max(...stats.weekday, 1);
+    for (let d = 0; d < 7; d++) {
+      const pct = Math.round((stats.weekday[d] / maxWeek) * 100);
+      html += `<div class="stats-weekday-col">
+        <div class="stats-weekday-bar" style="height:${Math.max(2, pct)}%"></div>
+        <div class="stats-weekday-label">${weekNames[d]}</div>
+      </div>`;
+    }
+
+    html += `</div></div>
+
+      <!-- 工具使用 -->
+      <div class="stats-section">
+        <div class="stats-section-title">工具使用排行（共 ${toolTotal} 次）</div>
+        <div class="stats-tools">`;
+
+    const tools = Object.entries(stats.toolUsage || {});
+    for (let i = 0; i < tools.length; i++) {
+      const [name, count] = tools[i];
+      const pct = Math.round((count / toolTotal) * 100);
+      const color = toolColors[i % toolColors.length];
+      html += `<div class="stats-tool-item">
+        <div class="stats-tool-name">${escapeHtml(name)}</div>
+        <div class="stats-tool-track"><div class="stats-tool-fill" style="width:${pct}%;background:${color}"></div></div>
+        <div class="stats-tool-value">${count} <span style="color:var(--text-muted)">(${pct}%)</span></div>
+      </div>`;
+    }
+
+    html += `</div></div>
+
+      <!-- 项目消息排行 -->
+      <div class="stats-section">
+        <div class="stats-section-title">项目消息排行</div>`;
+
+    const maxMsgs = Math.max(...stats.byProject.map(p => p.messages), 1);
+    for (const p of stats.byProject) {
+      const pct = Math.round((p.messages / maxMsgs) * 100);
+      html += `<div class="stats-bar-item">
+        <div class="stats-bar-name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</div>
+        <div class="stats-bar-track"><div class="stats-bar-fill" style="width:${pct}%"></div></div>
+        <div class="stats-bar-value">${p.messages}</div>
+      </div>`;
+    }
+
+    html += '</div></div>';
+    content.innerHTML = html;
+  } catch(e) {
+    content.innerHTML = `<div class="content-empty"><div class="content-empty-text">加载统计失败：${escapeHtml(e.message)}</div></div>`;
+  }
+}
+
 const iconTerminal='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>';
+const iconExport='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>';
+const iconStats='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>';
+const iconBack='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>';
 
 // Context Menu
 document.addEventListener('click',()=>document.getElementById('contextMenu').classList.remove('show'));

@@ -9,12 +9,15 @@ from flask import Flask, jsonify, render_template, request
 
 from .data import (
     get_claude_dir,
+    get_detailed_stats,
     get_real_project_paths,
     get_session_messages,
     get_sessions,
     load_custom_names,
+    load_favorites,
     load_settings,
     save_custom_names,
+    save_favorites,
     save_settings,
 )
 
@@ -63,7 +66,6 @@ def api_projects():
     """返回项目列表。"""
     try:
         sessions = get_sessions()
-        path_map = get_real_project_paths()
     except Exception as exc:
         return _json_error(f"读取 Claude Code 历史失败：{exc}")
 
@@ -71,21 +73,19 @@ def api_projects():
     for s in sessions:
         proj = s["project"]
         if proj not in projects:
-            real_path = path_map.get(proj, proj)
             projects[proj] = {
                 "name": proj,
-                "realPath": real_path,
+                "realPath": s["realProjectPath"],
                 "projectDir": s["projectDir"],
                 "sessions": [],
             }
-        real_path = path_map.get(proj, proj)
         projects[proj]["sessions"].append({
             "sessionId": s["sessionId"],
             "messageCount": s["messageCount"],
             "firstMessage": s["firstMessage"],
             "firstTimestamp": s["firstTimestamp"],
             "lastTimestamp": s["lastTimestamp"],
-            "realPath": real_path,
+            "realPath": s["realProjectPath"],
         })
 
     return jsonify(list(projects.values()))
@@ -193,6 +193,69 @@ def api_save_settings():
     return jsonify({"ok": True, "settings": current})
 
 
+@app.route("/api/favorites")
+def api_get_favorites():
+    """获取收藏列表。"""
+    return jsonify(load_favorites())
+
+
+@app.route("/api/favorites", methods=["POST"])
+def api_toggle_favorite():
+    """切换收藏状态。"""
+    data = request.get_json(silent=True) or {}
+    session_id = data.get("sessionId", "")
+    if not session_id:
+        return _json_error("缺少 sessionId", 400)
+
+    favs = load_favorites()
+    if favs.get(session_id):
+        favs.pop(session_id, None)
+    else:
+        favs[session_id] = True
+    save_favorites(favs)
+    return jsonify({"ok": True, "favorited": session_id in favs})
+
+
+@app.route("/api/export")
+def api_export():
+    """导出会话为 Markdown。"""
+    session_id = request.args.get("sessionId", "")
+    if not session_id:
+        return _json_error("缺少 sessionId", 400)
+
+    session = _get_session_by_id(session_id)
+    if not session:
+        return _json_error("未找到该会话", 404)
+
+    try:
+        messages = get_session_messages(session["projectDir"], session["sessionId"])
+    except Exception as exc:
+        return _json_error(f"读取会话失败：{exc}")
+
+    lines = [f"# 会话 {session_id[:8]}\n"]
+    lines.append(f"**项目**: {session.get('realProjectPath', session['project'])}\n")
+    lines.append(f"**消息数**: {len(messages)}\n\n---\n")
+
+    for msg in messages:
+        role = "**你**" if msg["role"] == "user" else "**AI**"
+        lines.append(f"\n{role}\n\n{msg['content']}\n")
+
+    md = "\n".join(lines)
+    return md, 200, {
+        "Content-Type": "text/markdown; charset=utf-8",
+        "Content-Disposition": f'attachment; filename="session-{session_id[:8]}.md"',
+    }
+
+
+@app.route("/api/stats")
+def api_stats():
+    """统计数据。"""
+    try:
+        return jsonify(get_detailed_stats())
+    except Exception as exc:
+        return _json_error(f"统计失败：{exc}")
+
+
 @app.route("/api/resume")
 def api_resume():
     """启动 PowerShell 继续对话。"""
@@ -233,6 +296,28 @@ def api_resume():
 
 
 # ========== Entry Point ==========
+
+class Api:
+    """pywebview JS API，供前端调用。"""
+
+    def save_file(self, filename, content):
+        """弹出原生保存对话框，保存文件。"""
+        import webview
+        import os
+
+        window = webview.windows[0]
+        result = window.create_file_dialog(
+            webview.SAVE_DIALOG,
+            save_filename=filename,
+            file_types=('Markdown 文件 (*.md)', '所有文件 (*.*)'),
+        )
+        if result:
+            path = result if isinstance(result, str) else result[0]
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            return {"ok": True, "path": path}
+        return {"ok": False}
+
 
 def main():
     """启动应用。"""
@@ -277,12 +362,14 @@ def main():
         except KeyboardInterrupt:
             pass
     else:
-        webview.create_window(
+        api = Api()
+        window = webview.create_window(
             "Claude Code 历史查看器",
             url,
             width=1200,
             height=800,
             min_size=(800, 500),
+            js_api=api,
         )
         webview.start()
 
