@@ -410,6 +410,88 @@ body {
 .stats-tool-fill { height: 100%; border-radius: 4px; transition: width 0.3s; min-width: 2px; }
 .stats-tool-value { font-size: 12px; color: var(--text-primary); width: 80px; flex-shrink: 0; font-weight: 500; }
 
+/* Skills & Plugins */
+.skills-plugins-view { padding: 24px; overflow-y: auto; flex: 1; }
+.skills-plugins-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.skills-plugins-title { font-size: 20px; font-weight: 600; color: var(--text-primary); }
+.skills-plugins-tabs { display: flex; gap: 8px; }
+.skills-plugins-tab {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.skills-plugins-tab:hover { background: var(--bg-hover); color: var(--text-primary); }
+.skills-plugins-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+.skills-plugins-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+
+.skill-card, .plugin-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  transition: all 0.2s;
+}
+.skill-card:hover, .plugin-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.skill-card-header, .plugin-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.skill-icon, .plugin-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.skill-icon { background: var(--accent); color: white; }
+.plugin-icon { background: #8b5cf6; color: white; }
+.skill-icon svg, .plugin-icon svg { width: 20px; height: 20px; }
+
+.skill-name, .plugin-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.skill-scope, .plugin-scope {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  margin-left: auto;
+}
+.skill-scope.user, .plugin-scope.user { background: #dbeafe; color: #1e40af; }
+.skill-scope.project, .plugin-scope.project { background: #dcfce7; color: #166534; }
+
+.skill-description, .plugin-description {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.skill-meta, .plugin-meta { display: flex; gap: 16px; font-size: 12px; color: var(--text-muted); }
+.skill-meta-item, .plugin-meta-item { display: flex; align-items: center; gap: 4px; }
+.skill-meta-item svg, .plugin-meta-item svg { width: 14px; height: 14px; }
+
+.skills-plugins-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+.skills-plugins-empty svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5; }
+.skills-plugins-empty p { font-size: 14px; }
+
 /* Messages */
 .messages {
   flex: 1;
@@ -802,6 +884,9 @@ body {
   <div class="stats" id="stats"></div>
   <button class="btn-settings" onclick="showStats()" title="统计">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+  </button>
+  <button class="btn-settings" onclick="showSkillsPlugins()" title="Skills & 插件">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
   </button>
   <button class="btn-settings" onclick="openSettings()" title="设置">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -1379,10 +1464,116 @@ async function showStats() {
   }
 }
 
+async function showSkillsPlugins() {
+  const content = document.getElementById('content');
+  content.innerHTML = '<div class="loading"><div class="spinner"></div> 加载 Skills & 插件...</div>';
+
+  try {
+    const [skills, plugins] = await Promise.all([
+      fetchJson('/api/skills'),
+      fetchJson('/api/plugins')
+    ]);
+
+    let currentTab = 'skills';
+
+    function renderTab(tab) {
+      currentTab = tab;
+      const items = tab === 'skills' ? skills : plugins;
+      const tabContent = document.getElementById('sp-tab-content');
+
+      if (items.length === 0) {
+        tabContent.innerHTML = `
+          <div class="skills-plugins-empty">
+            ${tab === 'skills' ? iconSkills : iconPlugin}
+            <p>暂无${tab === 'skills' ? 'Skills' : '插件'}</p>
+          </div>`;
+        return;
+      }
+
+      let html = '<div class="skills-plugins-grid">';
+
+      if (tab === 'skills') {
+        for (const skill of items) {
+          html += `
+            <div class="skill-card">
+              <div class="skill-card-header">
+                <div class="skill-icon">${iconSkills}</div>
+                <div>
+                  <div class="skill-name">${escapeHtml(skill.name)}</div>
+                </div>
+                <span class="skill-scope ${skill.scope}">${skill.scope === 'user' ? '用户级' : '项目级'}</span>
+              </div>
+              <div class="skill-description">${escapeHtml(skill.description || '暂无描述')}</div>
+              <div class="skill-meta">
+                ${skill.license ? `<div class="skill-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>${escapeHtml(skill.license)}</div>` : ''}
+              </div>
+            </div>`;
+        }
+      } else {
+        for (const plugin of items) {
+          const installDate = plugin.installedAt ? new Date(plugin.installedAt).toLocaleDateString('zh-CN') : '';
+          html += `
+            <div class="plugin-card">
+              <div class="plugin-card-header">
+                <div class="plugin-icon">${iconPlugin}</div>
+                <div>
+                  <div class="plugin-name">${escapeHtml(plugin.name)}</div>
+                </div>
+                <span class="plugin-scope ${plugin.scope}">${plugin.scope === 'user' ? '用户级' : '项目级'}</span>
+              </div>
+              <div class="plugin-description">版本: ${escapeHtml(plugin.version || '未知')}</div>
+              <div class="plugin-meta">
+                ${installDate ? `<div class="plugin-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>安装于 ${installDate}</div>` : ''}
+              </div>
+            </div>`;
+        }
+      }
+
+      html += '</div>';
+      tabContent.innerHTML = html;
+
+      // 更新 tab 按钮状态
+      document.querySelectorAll('.skills-plugins-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+      });
+    }
+
+    let html = `
+      <div class="skills-plugins-view">
+        <div class="skills-plugins-header">
+          <div class="skills-plugins-title">Skills & 插件</div>
+          <div class="skills-plugins-tabs">
+            <button class="skills-plugins-tab ${currentTab === 'skills' ? 'active' : ''}" data-tab="skills" onclick="document.dispatchEvent(new CustomEvent('switchTab', {detail: 'skills'}))">
+              Skills (${skills.length})
+            </button>
+            <button class="skills-plugins-tab ${currentTab === 'plugins' ? 'active' : ''}" data-tab="plugins" onclick="document.dispatchEvent(new CustomEvent('switchTab', {detail: 'plugins'}))">
+              插件 (${plugins.length})
+            </button>
+          </div>
+          <button class="btn-action" onclick="document.getElementById('content').innerHTML='<div class=\\'content-empty\\'><svg viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><path d=\\'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\\'></path></svg><div class=\\'content-empty-text\\'>选择一个会话开始查看</div></div>'">${iconBack} 返回</button>
+        </div>
+        <div id="sp-tab-content"></div>
+      </div>`;
+
+    content.innerHTML = html;
+
+    // 监听 tab 切换事件
+    document.addEventListener('switchTab', (e) => renderTab(e.detail));
+
+    // 初始渲染
+    renderTab('skills');
+
+  } catch(e) {
+    content.innerHTML = `<div class="content-empty"><div class="content-empty-text">加载失败：${escapeHtml(e.message)}</div></div>`;
+  }
+}
+
 const iconTerminal='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>';
 const iconExport='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>';
 const iconStats='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>';
 const iconBack='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>';
+const iconSkills='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>';
+const iconPlugin='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 7V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v3"></path><line x1="12" y1="12" x2="12" y2="16"></line><line x1="8" y1="14" x2="16" y2="14"></line></svg>';
 
 // Context Menu
 document.addEventListener('click',()=>document.getElementById('contextMenu').classList.remove('show'));

@@ -1,8 +1,11 @@
 """Flask 应用 + pywebview 桌面窗口。"""
 
+import re
 import socket
 import subprocess
 import threading
+import time
+from functools import lru_cache
 from pathlib import Path
 
 from flask import Flask, jsonify, render_template, request
@@ -10,9 +13,11 @@ from flask import Flask, jsonify, render_template, request
 from .data import (
     get_claude_dir,
     get_detailed_stats,
+    get_plugins,
     get_real_project_paths,
     get_session_messages,
     get_sessions,
+    get_skills,
     load_custom_names,
     load_favorites,
     load_settings,
@@ -23,13 +28,47 @@ from .data import (
 
 app = Flask(__name__, template_folder=str(Path(__file__).parent / "templates"))
 
+# UUID 格式验证（Claude Code 会话 ID 使用 UUID v4）
+_UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE)
+
+# 会话列表缓存
+_sessions_cache = {"data": None, "ts": 0}
+_CACHE_TTL = 5  # 秒
+
 
 def _json_error(message, status=500):
     return jsonify({"error": message}), status
 
 
+def _is_valid_uuid(session_id):
+    """验证是否为合法 UUID 格式。"""
+    return bool(session_id and _UUID_RE.match(session_id))
+
+
+def _is_under_projects_dir(path):
+    """验证路径是否在 .claude/projects 目录下（防止路径穿越）。"""
+    try:
+        projects_dir = get_claude_dir() / "projects"
+        resolved = Path(path).resolve()
+        resolved.relative_to(projects_dir.resolve())
+        return True
+    except (ValueError, OSError):
+        return False
+
+
+def _get_sessions_cached():
+    """带缓存的会话列表获取。"""
+    now = time.monotonic()
+    if _sessions_cache["data"] is not None and now - _sessions_cache["ts"] < _CACHE_TTL:
+        return _sessions_cache["data"]
+    data = get_sessions()
+    _sessions_cache["data"] = data
+    _sessions_cache["ts"] = now
+    return data
+
+
 def _session_index():
-    return {(s["projectDir"], s["sessionId"]): s for s in get_sessions()}
+    return {(s["projectDir"], s["sessionId"]): s for s in _get_sessions_cached()}
 
 
 def _get_known_session(project_dir, session_id):
@@ -37,7 +76,7 @@ def _get_known_session(project_dir, session_id):
 
 
 def _get_session_by_id(session_id):
-    for session in get_sessions():
+    for session in _get_sessions_cached():
         if session["sessionId"] == session_id:
             return session
     return None
@@ -73,7 +112,7 @@ def api_health():
 def api_projects():
     """返回项目列表。"""
     try:
-        sessions = get_sessions()
+        sessions = _get_sessions_cached()
     except Exception as exc:
         return _json_error(f"读取 Claude Code 历史失败：{exc}")
 
@@ -107,6 +146,12 @@ def api_messages():
     if not project_dir or not session_id:
         return _json_error("缺少参数", 400)
 
+    if not _is_valid_uuid(session_id):
+        return _json_error("无效的会话 ID", 400)
+
+    if not _is_under_projects_dir(project_dir):
+        return _json_error("无效的项目路径", 400)
+
     session = _get_known_session(project_dir, session_id)
     if not session:
         return _json_error("未找到该会话", 404)
@@ -126,7 +171,7 @@ def api_search():
 
     results = []
     try:
-        sessions = get_sessions()
+        sessions = _get_sessions_cached()
         for s in sessions:
             for msg in get_session_messages(s["projectDir"], s["sessionId"]):
                 if keyword in msg["content"].lower():
@@ -160,6 +205,8 @@ def api_set_custom_name():
     name = data.get("name", "")
     if not session_id:
         return _json_error("缺少 sessionId", 400)
+    if not _is_valid_uuid(session_id):
+        return _json_error("无效的会话 ID", 400)
     if name is None:
         name = ""
     name = str(name).strip()[:120]
@@ -214,6 +261,8 @@ def api_toggle_favorite():
     session_id = data.get("sessionId", "")
     if not session_id:
         return _json_error("缺少 sessionId", 400)
+    if not _is_valid_uuid(session_id):
+        return _json_error("无效的会话 ID", 400)
 
     favs = load_favorites()
     if favs.get(session_id):
@@ -230,6 +279,9 @@ def api_export():
     session_id = request.args.get("sessionId", "")
     if not session_id:
         return _json_error("缺少 sessionId", 400)
+
+    if not _is_valid_uuid(session_id):
+        return _json_error("无效的会话 ID", 400)
 
     session = _get_session_by_id(session_id)
     if not session:
@@ -264,6 +316,24 @@ def api_stats():
         return _json_error(f"统计失败：{exc}")
 
 
+@app.route("/api/skills")
+def api_skills():
+    """获取所有 skill。"""
+    try:
+        return jsonify(get_skills())
+    except Exception as exc:
+        return _json_error(f"读取 skill 失败：{exc}")
+
+
+@app.route("/api/plugins")
+def api_plugins():
+    """获取所有已安装的插件。"""
+    try:
+        return jsonify(get_plugins())
+    except Exception as exc:
+        return _json_error(f"读取插件失败：{exc}")
+
+
 @app.route("/api/resume")
 def api_resume():
     """启动 PowerShell 继续对话。"""
@@ -272,6 +342,9 @@ def api_resume():
     session_id = request.args.get("sessionId", "")
     if not session_id:
         return _json_error("缺少 sessionId", 400)
+
+    if not _is_valid_uuid(session_id):
+        return _json_error("无效的会话 ID", 400)
 
     session = _get_session_by_id(session_id)
     if not session:
@@ -287,10 +360,8 @@ def api_resume():
     if not shell:
         return _json_error("未找到 PowerShell，请确认 pwsh 或 powershell 在 PATH 中", 500)
 
-    # 将参数直接内联到脚本中（pwsh -Command 不会将后续参数传给 $args）
-    cwd_escaped = str(cwd).replace("'", "''")
-    sid_escaped = session_id.replace("'", "''")
-    script = f"Set-Location -LiteralPath '{cwd_escaped}'; claude --resume '{sid_escaped}'"
+    # UUID 已验证格式，直接使用；路径用 -LiteralPath 防止注入
+    script = f"Set-Location -LiteralPath '{str(cwd).replace(chr(39), chr(39)*2)}'; claude --resume '{session_id}'"
 
     try:
         creationflags = getattr(subprocess, "CREATE_NEW_CONSOLE", 0)

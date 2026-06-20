@@ -371,3 +371,106 @@ def get_detailed_stats():
         "trend": trend,
         "toolUsage": dict(tool_usage.most_common(10)),
     }
+
+
+def _parse_skill_md(skill_dir):
+    """解析 SKILL.md 文件，提取元数据。"""
+    skill_file = skill_dir / "SKILL.md"
+    if not skill_file.exists():
+        return None
+
+    try:
+        content = skill_file.read_text(encoding="utf-8")
+    except Exception:
+        return None
+
+    # 解析 YAML frontmatter
+    if not content.startswith("---"):
+        return None
+
+    parts = content.split("---", 2)
+    if len(parts) < 3:
+        return None
+
+    frontmatter = parts[1].strip()
+    metadata = {}
+    for line in frontmatter.split("\n"):
+        if ":" in line:
+            key, _, value = line.partition(":")
+            metadata[key.strip()] = value.strip()
+
+    return {
+        "name": metadata.get("name", skill_dir.name),
+        "description": metadata.get("description", ""),
+        "license": metadata.get("license", ""),
+        "scope": "user",
+        "path": str(skill_dir),
+    }
+
+
+def get_skills():
+    """获取所有 skill（用户级）。"""
+    skills = []
+    plugins_dir = get_claude_dir() / "plugins"
+
+    # 用户级 skill
+    user_skills_dir = plugins_dir / "anthropic-skills" / "skills"
+    if user_skills_dir.exists():
+        for skill_dir in user_skills_dir.iterdir():
+            if skill_dir.is_dir():
+                skill = _parse_skill_md(skill_dir)
+                if skill:
+                    skills.append(skill)
+
+    # 项目级 skill（如果有）
+    project_skills_dir = Path.cwd() / ".claude" / "skills"
+    if project_skills_dir.exists():
+        for skill_dir in project_skills_dir.iterdir():
+            if skill_dir.is_dir():
+                skill = _parse_skill_md(skill_dir)
+                if skill:
+                    skill["scope"] = "project"
+                    skills.append(skill)
+
+    return skills
+
+
+def get_plugins():
+    """获取所有已安装的插件。"""
+    plugins = []
+    plugins_dir = get_claude_dir() / "plugins"
+    installed_file = plugins_dir / "installed_plugins.json"
+
+    if not installed_file.exists():
+        return plugins
+
+    try:
+        data = json.loads(installed_file.read_text(encoding="utf-8"))
+    except Exception:
+        return plugins
+
+    plugins_data = data.get("plugins", {})
+    for plugin_id, installations in plugins_data.items():
+        for install in installations:
+            plugin_info = {
+                "id": plugin_id,
+                "name": plugin_id.split("@")[0] if "@" in plugin_id else plugin_id,
+                "scope": install.get("scope", "user"),
+                "version": install.get("version", ""),
+                "installedAt": install.get("installedAt", ""),
+                "lastUpdated": install.get("lastUpdated", ""),
+                "installPath": install.get("installPath", ""),
+            }
+
+            # 尝试读取插件配置
+            config_path = Path(install.get("installPath", "")) / "config.json"
+            if config_path.exists():
+                try:
+                    config = json.loads(config_path.read_text(encoding="utf-8"))
+                    plugin_info["config"] = config
+                except Exception:
+                    pass
+
+            plugins.append(plugin_info)
+
+    return plugins
