@@ -41,5 +41,5 @@ Homepage = "https://github.com/zzzmike123/cc-history"
 where = ["src"]
 
 [tool.setuptools.package-data]
-cc_history = ["templates/*.html"]
+cc_history = ["templates/*.html", "static/*.css", "static/*.js"]
 

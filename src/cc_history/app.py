@@ -27,7 +27,9 @@ from .data import (
     save_settings,
 )
 
-app = Flask(__name__, template_folder=str(Path(__file__).parent / "templates"))
+app = Flask(__name__,
+            template_folder=str(Path(__file__).parent / "templates"),
+            static_folder=str(Path(__file__).parent / "static"))
 
 # UUID 格式验证（Claude Code 会话 ID 使用 UUID v4）
 _UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE)
