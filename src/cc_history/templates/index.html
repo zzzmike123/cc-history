@@ -492,6 +492,137 @@ body {
 .skills-plugins-empty svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5; }
 .skills-plugins-empty p { font-size: 14px; }
 
+/* Skill/Plugin 详情悬浮窗 */
+.detail-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.detail-modal-content {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.detail-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-modal-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.detail-modal-icon.skill { background: var(--accent); color: white; }
+.detail-modal-icon.plugin { background: #8b5cf6; color: white; }
+.detail-modal-icon svg { width: 24px; height: 24px; }
+
+.detail-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.detail-modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+}
+.detail-modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+.detail-modal-close svg { width: 18px; height: 18px; }
+
+.detail-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.detail-section {
+  margin-bottom: 20px;
+}
+.detail-section:last-child { margin-bottom: 0; }
+
+.detail-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.detail-section-content {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.detail-tag {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+}
+.detail-tag.user { background: #dbeafe; color: #1e40af; }
+.detail-tag.project { background: #dcfce7; color: #166534; }
+
+.detail-path {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-subtle);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  word-break: break-all;
+}
+
+.skill-card, .plugin-card { cursor: pointer; }
+
 /* Messages */
 .messages {
   flex: 1;
@@ -1476,6 +1607,81 @@ async function showSkillsPlugins() {
 
     let currentTab = 'skills';
 
+    // 显示详情悬浮窗
+    window.showDetail = function(type, index) {
+      const item = type === 'skill' ? skills[index] : plugins[index];
+      if (!item) return;
+
+      const modal = document.createElement('div');
+      modal.className = 'detail-modal';
+      modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+      let bodyHtml = '';
+
+      if (type === 'skill') {
+        bodyHtml = `
+          <div class="detail-section">
+            <div class="detail-section-title">描述</div>
+            <div class="detail-section-content">${escapeHtml(item.description || '暂无描述')}</div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section-title">作用域</div>
+            <div class="detail-tags">
+              <span class="detail-tag ${item.scope}">${item.scope === 'user' ? '用户级' : '项目级'}</span>
+            </div>
+          </div>
+          ${item.license ? `
+          <div class="detail-section">
+            <div class="detail-section-title">许可证</div>
+            <div class="detail-section-content">${escapeHtml(item.license)}</div>
+          </div>` : ''}
+          <div class="detail-section">
+            <div class="detail-section-title">路径</div>
+            <div class="detail-path">${escapeHtml(item.path)}</div>
+          </div>`;
+      } else {
+        const installDate = item.installedAt ? new Date(item.installedAt).toLocaleString('zh-CN') : '未知';
+        const updateDate = item.lastUpdated ? new Date(item.lastUpdated).toLocaleString('zh-CN') : '未知';
+        bodyHtml = `
+          <div class="detail-section">
+            <div class="detail-section-title">版本</div>
+            <div class="detail-section-content">${escapeHtml(item.version || '未知')}</div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section-title">作用域</div>
+            <div class="detail-tags">
+              <span class="detail-tag ${item.scope}">${item.scope === 'user' ? '用户级' : '项目级'}</span>
+            </div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section-title">安装时间</div>
+            <div class="detail-section-content">${installDate}</div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section-title">最后更新</div>
+            <div class="detail-section-content">${updateDate}</div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section-title">安装路径</div>
+            <div class="detail-path">${escapeHtml(item.installPath)}</div>
+          </div>`;
+      }
+
+      modal.innerHTML = `
+        <div class="detail-modal-content">
+          <div class="detail-modal-header">
+            <div class="detail-modal-icon ${type}">${type === 'skill' ? iconSkills : iconPlugin}</div>
+            <div class="detail-modal-title">${escapeHtml(item.name)}</div>
+            <button class="detail-modal-close" onclick="this.closest('.detail-modal').remove()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="detail-modal-body">${bodyHtml}</div>
+        </div>`;
+
+      document.body.appendChild(modal);
+    };
+
     function renderTab(tab) {
       currentTab = tab;
       const items = tab === 'skills' ? skills : plugins;
@@ -1493,9 +1699,10 @@ async function showSkillsPlugins() {
       let html = '<div class="skills-plugins-grid">';
 
       if (tab === 'skills') {
-        for (const skill of items) {
+        for (let i = 0; i < items.length; i++) {
+          const skill = items[i];
           html += `
-            <div class="skill-card">
+            <div class="skill-card" onclick="showDetail('skill', ${i})">
               <div class="skill-card-header">
                 <div class="skill-icon">${iconSkills}</div>
                 <div>
@@ -1510,10 +1717,11 @@ async function showSkillsPlugins() {
             </div>`;
         }
       } else {
-        for (const plugin of items) {
+        for (let i = 0; i < items.length; i++) {
+          const plugin = items[i];
           const installDate = plugin.installedAt ? new Date(plugin.installedAt).toLocaleDateString('zh-CN') : '';
           html += `
-            <div class="plugin-card">
+            <div class="plugin-card" onclick="showDetail('plugin', ${i})">
               <div class="plugin-card-header">
                 <div class="plugin-icon">${iconPlugin}</div>
                 <div>
