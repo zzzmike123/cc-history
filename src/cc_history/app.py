@@ -449,6 +449,7 @@ def main():
             height=800,
             min_size=(800, 500),
             js_api=api,
+            text_select=True,
         )
         webview.start()
 
