@@ -56,6 +56,14 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/favicon.ico")
+def favicon():
+    from flask import send_from_directory
+    import os
+    icon_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    return send_from_directory(icon_dir, "cat.ico", mimetype="image/x-icon")
+
+
 @app.route("/api/health")
 def api_health():
     return jsonify({"ok": True})
