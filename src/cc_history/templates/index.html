@@ -152,6 +152,27 @@ body {
 }
 .search-wrapper input::placeholder { color: var(--text-muted); font-weight: 400; }
 
+.search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.search-clear:hover { background: var(--bg-hover); color: var(--text-primary); }
+.search-clear svg { width: 12px; height: 12px; pointer-events: none; }
+.search-clear.show { display: flex; }
+
 .stats {
   display: flex;
   gap: 20px;
@@ -1090,7 +1111,10 @@ body {
   </div>
   <div class="search-wrapper">
     <svg viewBox="0 0 16 16" fill="currentColor"><path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.499 4.499 0 1 0-8.997 0A4.499 4.499 0 0 0 11.5 7Z"/></svg>
-    <input type="text" id="searchInput" placeholder="搜索消息... (Ctrl+K)" oninput="debounceSearch()" onkeydown="if(event.key==='Escape'){this.value='';doSearch()}">
+    <input type="text" id="searchInput" placeholder="搜索消息... (Ctrl+K)" oninput="debounceSearch();toggleSearchClear()" onkeydown="if(event.key==='Escape'){this.value='';doSearch();toggleSearchClear()}">
+    <button class="search-clear" id="searchClear" onclick="clearSearch()" title="清除搜索">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
   </div>
   <div class="stats" id="stats"></div>
   <button class="btn-settings" onclick="showStats()" title="统计">
@@ -1451,6 +1475,24 @@ async function loadMessages(encodedProjectDir,sessionId,encodedRealPath,searchKe
       input.value = keyword;
       doChatSearch();
     }
+  }
+}
+
+function toggleSearchClear() {
+  const input = document.getElementById('searchInput');
+  const btn = document.getElementById('searchClear');
+  if (input && btn) {
+    btn.classList.toggle('show', input.value.length > 0);
+  }
+}
+
+function clearSearch() {
+  const input = document.getElementById('searchInput');
+  if (input) {
+    input.value = '';
+    toggleSearchClear();
+    doSearch();
+    input.focus();
   }
 }
 
