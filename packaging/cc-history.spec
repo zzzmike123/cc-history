@@ -11,6 +11,7 @@ a = Analysis(
     binaries=[],
     datas=[
         (str(ROOT / "src" / "cc_history" / "templates"), "cc_history/templates"),
+        (str(ROOT / "cat.ico"), "."),
     ],
     hiddenimports=[
         "bottle",

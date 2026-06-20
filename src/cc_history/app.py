@@ -3,6 +3,7 @@
 import re
 import socket
 import subprocess
+import sys
 import threading
 import time
 from functools import lru_cache
@@ -88,6 +89,21 @@ def _find_free_port():
         return sock.getsockname()[1]
 
 
+def _clear_sessions_cache():
+    """清空会话缓存。"""
+    _sessions_cache["data"] = None
+    _sessions_cache["ts"] = 0
+
+
+def _resource_path(*parts):
+    """获取源码或 PyInstaller 运行时资源路径。"""
+    if getattr(sys, "frozen", False):
+        base = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+    else:
+        base = Path(__file__).resolve().parents[2]
+    return base.joinpath(*parts)
+
+
 # ========== API Routes ==========
 
 @app.route("/")
@@ -97,10 +113,11 @@ def index():
 
 @app.route("/favicon.ico")
 def favicon():
-    from flask import send_from_directory
-    import os
-    icon_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    return send_from_directory(icon_dir, "cat.ico", mimetype="image/x-icon")
+    from flask import send_file
+    icon_path = _resource_path("cat.ico")
+    if icon_path.exists():
+        return send_file(icon_path, mimetype="image/x-icon")
+    return "", 404
 
 
 @app.route("/api/health")
@@ -245,6 +262,7 @@ def api_save_settings():
             current["theme"] = data["theme"]
 
     save_settings(current)
+    _clear_sessions_cache()
     return jsonify({"ok": True, "settings": current})
 
 

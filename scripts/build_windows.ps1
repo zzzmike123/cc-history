@@ -7,6 +7,13 @@ $ErrorActionPreference = "Stop"
 $Root = Resolve-Path (Join-Path $PSScriptRoot "..")
 Set-Location $Root
 
+$Pyproject = Get-Content -Raw ".\pyproject.toml"
+if ($Pyproject -notmatch '(?m)^version\s*=\s*"([^"]+)"') {
+    throw "Could not read project version from pyproject.toml"
+}
+$Version = $Matches[1]
+$InstallerName = "CC-History-Setup-$Version.exe"
+
 Write-Host "==> Building CC History executable"
 python -m pip install --upgrade pip
 python -m pip install -e . pyinstaller
@@ -46,6 +53,4 @@ Write-Host "==> Building Windows installer"
 Write-Host ""
 Write-Host "Done:"
 Write-Host "  dist\CC History.exe"
-Write-Host "  installer\output\CC-History-Setup-1.0.0.exe"
-
-
+Write-Host "  installer\output\$InstallerName"
