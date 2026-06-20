@@ -1371,8 +1371,8 @@ async function toggleFavorite(sessionId) {
 
 function toggleProject(id){const el=document.getElementById('proj-'+id);if(el)el.classList.toggle('expanded');}
 
-async function loadMessages(encodedProjectDir,sessionId,encodedRealPath){
-  if(currentSessionId===sessionId)return;
+async function loadMessages(encodedProjectDir,sessionId,encodedRealPath,searchKeyword){
+  if(currentSessionId===sessionId && !searchKeyword)return;
   currentSessionId=sessionId;
   document.querySelectorAll('.session-item').forEach(el=>el.classList.remove('active'));
   const sessEl=document.getElementById('sess-'+sessionId);
@@ -1436,12 +1436,22 @@ async function loadMessages(encodedProjectDir,sessionId,encodedRealPath){
   }
   html+='</div>';
   content.innerHTML=html;
-  const m=content.querySelector('.messages');if(m)m.scrollTop=m.scrollHeight;
 
   // 存储原始消息用于搜索
   window._chatMessages = messages;
   window._chatSearchResults = [];
   window._chatSearchIndex = -1;
+
+  // 如果有搜索关键词，自动打开搜索并定位
+  if (searchKeyword) {
+    const keyword = decodeURIComponent(searchKeyword);
+    toggleChatSearch();
+    const input = document.getElementById('chatSearchInput');
+    if (input) {
+      input.value = keyword;
+      doChatSearch();
+    }
+  }
 }
 
 async function doSearch(){
@@ -1460,7 +1470,8 @@ async function doSearch(){
   let html=`<div class="search-header">找到 ${results.length} 条结果</div>`;
   for(const r of results){
     const rp=encodeURIComponent(r.realProjectPath||'');
-    html+=`<div class="search-result" onclick="loadMessages('${encodeURIComponent(r.projectDir)}','${r.sessionId}','${rp}')">
+    const searchQ=encodeURIComponent(q);
+    html+=`<div class="search-result" onclick="loadMessages('${encodeURIComponent(r.projectDir)}','${r.sessionId}','${rp}','${searchQ}')">
       <div class="sr-top"><span class="sr-project">${escapeHtml(r.project)}</span><span class="sr-time">${formatTime(r.timestamp)}</span></div>
       <div class="sr-content"><span class="sr-role ${r.role}">${r.role==='user'?'你':'AI'}</span>${escapeHtml(r.content)}</div>
     </div>`;
