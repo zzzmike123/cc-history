@@ -356,6 +356,84 @@ body {
 .btn-action:hover { background: var(--bg-hover); color: var(--text-primary); }
 .btn-action svg { width: 14px; height: 14px; }
 
+/* 对话内搜索 */
+.chat-search-bar {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 24px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.chat-search-bar.show { display: flex; }
+
+.chat-search-input {
+  flex: 1;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.chat-search-input:focus { border-color: var(--accent); }
+
+.chat-search-info {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  min-width: 60px;
+  text-align: center;
+}
+
+.chat-search-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.chat-search-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.chat-search-btn svg { width: 14px; height: 14px; }
+
+.chat-search-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.chat-search-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+.chat-search-close svg { width: 14px; height: 14px; }
+
+/* 搜索高亮 */
+.search-highlight {
+  background: #FDE68A;
+  color: #1E293B;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+.search-highlight.active {
+  background: #F97316;
+  color: white;
+}
+
 .session-fav {
   font-size: 14px;
   cursor: pointer;
@@ -1323,6 +1401,10 @@ async function loadMessages(encodedProjectDir,sessionId,encodedRealPath){
       </div>
     </div>
     <div class="chat-actions">
+      <button class="btn-action" onclick="toggleChatSearch()" title="在对话中搜索">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        搜索
+      </button>
       <button class="btn-action" onclick="exportSession('${sessionId}')" title="导出为 Markdown">
         ${iconExport} 导出
       </button>
@@ -1330,17 +1412,36 @@ async function loadMessages(encodedProjectDir,sessionId,encodedRealPath){
         ${iconTerminal} 继续对话
       </button>
     </div>
-  </div><div class="messages">`;
+  </div>
+  <div class="chat-search-bar" id="chatSearchBar">
+    <input type="text" class="chat-search-input" id="chatSearchInput" placeholder="搜索对话内容..." oninput="doChatSearch()" onkeydown="if(event.key==='Escape'){toggleChatSearch()}else if(event.key==='Enter'){chatSearchNext()}">
+    <span class="chat-search-info" id="chatSearchInfo"></span>
+    <button class="chat-search-btn" onclick="chatSearchPrev()" title="上一个">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg>
+    </button>
+    <button class="chat-search-btn" onclick="chatSearchNext()" title="下一个">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </button>
+    <button class="chat-search-close" onclick="toggleChatSearch()" title="关闭搜索">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+  </div>
+  <div class="messages">`;
   for(const msg of messages){
     const av=msg.role==='user'?iconUser:iconBot;
     html+=`<div class="message ${msg.role}">
       <div class="msg-avatar">${av}</div>
-      <div class="msg-body"><div class="msg-bubble">${renderMarkdown(msg.content)}</div><div class="msg-time">${formatTime(msg.timestamp)}</div></div>
+      <div class="msg-body"><div class="msg-bubble" data-raw="${escapeHtml(msg.content)}">${renderMarkdown(msg.content)}</div><div class="msg-time">${formatTime(msg.timestamp)}</div></div>
     </div>`;
   }
   html+='</div>';
   content.innerHTML=html;
   const m=content.querySelector('.messages');if(m)m.scrollTop=m.scrollHeight;
+
+  // 存储原始消息用于搜索
+  window._chatMessages = messages;
+  window._chatSearchResults = [];
+  window._chatSearchIndex = -1;
 }
 
 async function doSearch(){
@@ -1368,6 +1469,110 @@ async function doSearch(){
 }
 
 function debounceSearch(){clearTimeout(searchTimer);searchTimer=setTimeout(doSearch,250);}
+
+// 对话内搜索
+function toggleChatSearch() {
+  const bar = document.getElementById('chatSearchBar');
+  if (!bar) return;
+  bar.classList.toggle('show');
+  if (bar.classList.contains('show')) {
+    document.getElementById('chatSearchInput').focus();
+  } else {
+    clearChatSearch();
+  }
+}
+
+function clearChatSearch() {
+  window._chatSearchResults = [];
+  window._chatSearchIndex = -1;
+  const info = document.getElementById('chatSearchInfo');
+  if (info) info.textContent = '';
+  // 清除所有高亮
+  document.querySelectorAll('.msg-bubble').forEach(bubble => {
+    const raw = bubble.getAttribute('data-raw');
+    if (raw) bubble.innerHTML = renderMarkdown(raw);
+  });
+}
+
+function doChatSearch() {
+  const input = document.getElementById('chatSearchInput');
+  const info = document.getElementById('chatSearchInfo');
+  if (!input || !info) return;
+
+  const keyword = input.value.trim().toLowerCase();
+  clearChatSearch();
+
+  if (!keyword) {
+    info.textContent = '';
+    return;
+  }
+
+  // 搜索并高亮
+  const results = [];
+  document.querySelectorAll('.msg-bubble').forEach((bubble, idx) => {
+    const raw = bubble.getAttribute('data-raw');
+    if (!raw) return;
+
+    const lower = raw.toLowerCase();
+    if (!lower.includes(keyword)) return;
+
+    // 高亮匹配的文字
+    const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const highlighted = renderMarkdown(raw).replace(regex, '<span class="search-highlight">$1</span>');
+    bubble.innerHTML = highlighted;
+
+    // 记录匹配的元素
+    const spans = bubble.querySelectorAll('.search-highlight');
+    spans.forEach(span => results.push(span));
+  });
+
+  window._chatSearchResults = results;
+  window._chatSearchIndex = results.length > 0 ? 0 : -1;
+
+  if (results.length > 0) {
+    info.textContent = `1/${results.length}`;
+    results[0].classList.add('active');
+    results[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } else {
+    info.textContent = '无结果';
+  }
+}
+
+function chatSearchNext() {
+  const results = window._chatSearchResults || [];
+  if (results.length === 0) return;
+
+  // 移除当前高亮
+  if (window._chatSearchIndex >= 0 && window._chatSearchIndex < results.length) {
+    results[window._chatSearchIndex].classList.remove('active');
+  }
+
+  // 移动到下一个
+  window._chatSearchIndex = (window._chatSearchIndex + 1) % results.length;
+  results[window._chatSearchIndex].classList.add('active');
+  results[window._chatSearchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  const info = document.getElementById('chatSearchInfo');
+  if (info) info.textContent = `${window._chatSearchIndex + 1}/${results.length}`;
+}
+
+function chatSearchPrev() {
+  const results = window._chatSearchResults || [];
+  if (results.length === 0) return;
+
+  // 移除当前高亮
+  if (window._chatSearchIndex >= 0 && window._chatSearchIndex < results.length) {
+    results[window._chatSearchIndex].classList.remove('active');
+  }
+
+  // 移动到上一个
+  window._chatSearchIndex = (window._chatSearchIndex - 1 + results.length) % results.length;
+  results[window._chatSearchIndex].classList.add('active');
+  results[window._chatSearchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  const info = document.getElementById('chatSearchInfo');
+  if (info) info.textContent = `${window._chatSearchIndex + 1}/${results.length}`;
+}
 
 // Settings
 let currentSettings = {};
