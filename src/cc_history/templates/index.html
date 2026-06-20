@@ -60,6 +60,14 @@
   --shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
 }
 
+/* Dark theme scrollbar */
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #4B5563; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #6B7280; }
+
+/* Dark theme search highlight */
+[data-theme="dark"] .search-highlight { background: #854D0E; color: #FEF3C7; border-radius: 2px; padding: 0 1px; }
+[data-theme="dark"] .search-highlight.active { background: #D97706; color: #FEF3C7; }
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
@@ -842,6 +850,31 @@ body {
   font-size: 12px;
   line-height: 1.6;
 }
+
+/* Code block with copy button */
+.code-block { position: relative; }
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 1;
+}
+.copy-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+.code-block:hover .copy-btn { opacity: 1; }
+.copy-btn.copied { background: #10B981; color: white; border-color: #10B981; opacity: 1; }
+
 .msg-bubble strong { color: var(--text-primary); font-weight: 600; }
 .msg-bubble em { color: var(--text-secondary); font-style: italic; }
 .msg-bubble a { color: var(--accent); text-decoration: none; font-weight: 500; }
@@ -1139,7 +1172,7 @@ body {
   </div>
   <div class="search-wrapper">
     <svg viewBox="0 0 16 16" fill="currentColor"><path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.499 4.499 0 1 0-8.997 0A4.499 4.499 0 0 0 11.5 7Z"/></svg>
-    <input type="text" id="searchInput" placeholder="搜索消息... (Ctrl+K)" oninput="debounceSearch();toggleSearchClear()" onkeydown="if(event.key==='Escape'){this.value='';doSearch();toggleSearchClear()}">
+    <input type="text" id="searchInput" placeholder="搜索消息... (Ctrl+K)" oninput="debounceSearch();toggleSearchClear()" onkeydown="if(event.key==='Escape'){this.value='';doSearch();toggleSearchClear();this.blur()}">
     <button class="search-clear" id="searchClear" onclick="clearSearch()" title="清除搜索">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
     </button>
@@ -1235,7 +1268,32 @@ let ctxSessionId = '';
 let ctxSessionName = '';
 
 document.addEventListener('keydown', e => {
+  // Ctrl+K: 聚焦全局搜索
   if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); document.getElementById('searchInput').focus(); }
+
+  // Ctrl+F: 对话内搜索（仅在有会话打开时）
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f' && currentSessionId) {
+    e.preventDefault();
+    toggleChatSearch();
+  }
+
+  // Ctrl+E: 导出当前会话
+  if ((e.ctrlKey || e.metaKey) && e.key === 'e' && currentSessionId) {
+    e.preventDefault();
+    exportSession(currentSessionId);
+  }
+
+  // Escape: 关闭弹窗
+  if (e.key === 'Escape') {
+    const settings = document.getElementById('settingsOverlay');
+    if (settings && settings.classList.contains('show')) { closeSettings(); return; }
+    const rename = document.getElementById('renameOverlay');
+    if (rename && rename.classList.contains('show')) { closeRename(); return; }
+    const chatSearch = document.getElementById('chatSearchBar');
+    if (chatSearch && chatSearch.classList.contains('show')) { toggleChatSearch(); return; }
+    const detailModal = document.querySelector('.detail-modal');
+    if (detailModal) { detailModal.remove(); return; }
+  }
 });
 
 function formatTime(ts) {
@@ -1254,14 +1312,31 @@ function formatTime(ts) {
 
 function escapeHtml(t) { const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
 
+let _codeBlockId = 0;
 function renderMarkdown(text) {
   let h = escapeHtml(text);
-  h = h.replace(/```(\w*)\n([\s\S]*?)```/g,(_,l,c)=>`<pre><code>${c}</code></pre>`);
+  h = h.replace(/```(\w*)\n([\s\S]*?)```/g,(_,l,c)=>{
+    const id = 'cb-' + (++_codeBlockId);
+    return `<div class="code-block"><button class="copy-btn" onclick="copyCode(this,'${id}')" title="复制代码"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> 复制</button><pre><code id="${id}">${c}</code></pre></div>`;
+  });
   h = h.replace(/`([^`]+)`/g,'<code>$1</code>');
   h = h.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
   h = h.replace(/\*(.+?)\*/g,'<em>$1</em>');
   h = h.replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
   return h;
+}
+
+function copyCode(btn, id) {
+  const code = document.getElementById(id);
+  if (!code) return;
+  navigator.clipboard.writeText(code.textContent).then(() => {
+    btn.classList.add('copied');
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="20 6 9 17 4 12"></polyline></svg> 已复制';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> 复制';
+    }, 2000);
+  });
 }
 
 const iconFolder = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>';
