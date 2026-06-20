@@ -734,6 +734,34 @@ body {
   gap: 4px;
 }
 
+.load-more-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  margin: 0 auto 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.load-more-btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--accent); }
+.load-more-btn svg { width: 14px; height: 14px; }
+
+.load-more-info {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
 .message {
   display: flex;
   gap: 10px;
@@ -1457,10 +1485,25 @@ async function loadMessages(encodedProjectDir,sessionId,encodedRealPath,searchKe
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
     </button>
   </div>
-  <div class="messages">`;
-  for(const msg of messages){
+  <div class="messages" id="chatMessages">`;
+
+  // 分页：初始只渲染最后 PAGE_SIZE 条
+  const PAGE_SIZE = 50;
+  const totalMsgs = messages.length;
+  const startIdx = Math.max(0, totalMsgs - PAGE_SIZE);
+
+  if (startIdx > 0) {
+    html += `<div class="load-more-info">共 ${totalMsgs} 条消息，显示最近 ${PAGE_SIZE} 条</div>`;
+    html += `<button class="load-more-btn" id="loadMoreBtn" onclick="loadMoreMessages()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg>
+      加载更早的消息
+    </button>`;
+  }
+
+  for(let i = startIdx; i < totalMsgs; i++){
+    const msg = messages[i];
     const av=msg.role==='user'?iconUser:iconBot;
-    html+=`<div class="message ${msg.role}">
+    html+=`<div class="message ${msg.role}" data-idx="${i}">
       <div class="msg-avatar">${av}</div>
       <div class="msg-body"><div class="msg-bubble" data-raw="${escapeHtml(msg.content)}">${renderMarkdown(msg.content)}</div><div class="msg-time">${formatTime(msg.timestamp)}</div></div>
     </div>`;
@@ -1468,10 +1511,15 @@ async function loadMessages(encodedProjectDir,sessionId,encodedRealPath,searchKe
   html+='</div>';
   content.innerHTML=html;
 
-  // 存储原始消息用于搜索
+  // 存储原始消息用于搜索和分页
   window._chatMessages = messages;
   window._chatSearchResults = [];
   window._chatSearchIndex = -1;
+  window._chatLoadedCount = PAGE_SIZE;
+
+  // 滚动到底部
+  const msgContainer = document.getElementById('chatMessages');
+  if (msgContainer) msgContainer.scrollTop = msgContainer.scrollHeight;
 
   // 如果有搜索关键词，自动打开搜索并定位
   if (searchKeyword) {
@@ -1482,6 +1530,75 @@ async function loadMessages(encodedProjectDir,sessionId,encodedRealPath,searchKe
       input.value = keyword;
       doChatSearch();
     }
+  }
+}
+
+function loadMoreMessages() {
+  const messages = window._chatMessages;
+  if (!messages) return;
+
+  const PAGE_SIZE = 50;
+  const loaded = window._chatLoadedCount || 0;
+  const total = messages.length;
+  const newLoaded = Math.min(loaded + PAGE_SIZE, total);
+  const startIdx = total - newLoaded;
+  const endIdx = total - loaded;
+
+  if (startIdx >= endIdx) return;
+
+  // 记录当前滚动位置
+  const container = document.getElementById('chatMessages');
+  const oldScrollHeight = container ? container.scrollHeight : 0;
+
+  // 渲染新消息
+  let html = '';
+  for (let i = startIdx; i < endIdx; i++) {
+    const msg = messages[i];
+    const av = msg.role === 'user' ? iconUser : iconBot;
+    html += `<div class="message ${msg.role}" data-idx="${i}">
+      <div class="msg-avatar">${av}</div>
+      <div class="msg-body"><div class="msg-bubble" data-raw="${escapeHtml(msg.content)}">${renderMarkdown(msg.content)}</div><div class="msg-time">${formatTime(msg.timestamp)}</div></div>
+    </div>`;
+  }
+
+  // 移除旧的加载按钮和信息
+  const oldBtn = document.getElementById('loadMoreBtn');
+  const oldInfo = container.querySelector('.load-more-info');
+  if (oldBtn) oldBtn.remove();
+  if (oldInfo) oldInfo.remove();
+
+  // 在消息列表开头插入
+  const firstMsg = container.querySelector('.message');
+  if (firstMsg) {
+    firstMsg.insertAdjacentHTML('beforebegin', html);
+  } else {
+    container.innerHTML = html + container.innerHTML;
+  }
+
+  // 添加新的加载按钮（如果还有更多）
+  window._chatLoadedCount = newLoaded;
+  if (startIdx > 0) {
+    const infoHtml = `<div class="load-more-info">共 ${total} 条消息，已显示 ${newLoaded} 条</div>`;
+    const btnHtml = `<button class="load-more-btn" id="loadMoreBtn" onclick="loadMoreMessages()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg>
+      加载更早的消息
+    </button>`;
+    const firstMsgNow = container.querySelector('.message');
+    if (firstMsgNow) {
+      firstMsgNow.insertAdjacentHTML('beforebegin', infoHtml + btnHtml);
+    }
+  }
+
+  // 保持滚动位置不变
+  if (container) {
+    const newScrollHeight = container.scrollHeight;
+    container.scrollTop = newScrollHeight - oldScrollHeight;
+  }
+
+  // 如果有搜索关键词，重新高亮
+  const searchInput = document.getElementById('chatSearchInput');
+  if (searchInput && searchInput.value.trim()) {
+    doChatSearch();
   }
 }
 
