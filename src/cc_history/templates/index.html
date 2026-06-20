@@ -1487,11 +1487,55 @@ function clearChatSearch() {
   window._chatSearchIndex = -1;
   const info = document.getElementById('chatSearchInfo');
   if (info) info.textContent = '';
-  // 清除所有高亮
+  // 清除所有高亮 - 重新渲染
   document.querySelectorAll('.msg-bubble').forEach(bubble => {
     const raw = bubble.getAttribute('data-raw');
     if (raw) bubble.innerHTML = renderMarkdown(raw);
   });
+}
+
+// 在文本节点中高亮关键词（不破坏 HTML 结构）
+function highlightInElement(element, keyword) {
+  const highlights = [];
+  const regex = new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+
+  // 使用 TreeWalker 遍历所有文本节点
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+  const textNodes = [];
+  while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+  textNodes.forEach(node => {
+    const text = node.textContent;
+    regex.lastIndex = 0;
+    if (!regex.test(text)) return;
+
+    // 创建文档片段替换文本节点
+    const frag = document.createDocumentFragment();
+    let lastIdx = 0;
+    regex.lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+      // 匹配前的文本
+      if (match.index > lastIdx) {
+        frag.appendChild(document.createTextNode(text.slice(lastIdx, match.index)));
+      }
+      // 高亮的匹配文本
+      const span = document.createElement('span');
+      span.className = 'search-highlight';
+      span.textContent = match[0];
+      frag.appendChild(span);
+      highlights.push(span);
+      lastIdx = match.index + match[0].length;
+    }
+    // 剩余文本
+    if (lastIdx < text.length) {
+      frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+    }
+    node.parentNode.replaceChild(frag, node);
+  });
+
+  return highlights;
 }
 
 function doChatSearch() {
@@ -1499,7 +1543,7 @@ function doChatSearch() {
   const info = document.getElementById('chatSearchInfo');
   if (!input || !info) return;
 
-  const keyword = input.value.trim().toLowerCase();
+  const keyword = input.value.trim();
   clearChatSearch();
 
   if (!keyword) {
@@ -1509,21 +1553,18 @@ function doChatSearch() {
 
   // 搜索并高亮
   const results = [];
-  document.querySelectorAll('.msg-bubble').forEach((bubble, idx) => {
+  document.querySelectorAll('.msg-bubble').forEach(bubble => {
     const raw = bubble.getAttribute('data-raw');
     if (!raw) return;
 
     const lower = raw.toLowerCase();
-    if (!lower.includes(keyword)) return;
+    if (!lower.includes(keyword.toLowerCase())) return;
 
-    // 高亮匹配的文字
-    const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    const highlighted = renderMarkdown(raw).replace(regex, '<span class="search-highlight">$1</span>');
-    bubble.innerHTML = highlighted;
-
-    // 记录匹配的元素
-    const spans = bubble.querySelectorAll('.search-highlight');
-    spans.forEach(span => results.push(span));
+    // 先渲染 markdown
+    bubble.innerHTML = renderMarkdown(raw);
+    // 然后在渲染后的 DOM 中高亮
+    const highlights = highlightInElement(bubble, keyword);
+    results.push(...highlights);
   });
 
   window._chatSearchResults = results;
