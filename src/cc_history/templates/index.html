@@ -1398,6 +1398,13 @@ function toggleProject(id){const el=document.getElementById('proj-'+id);if(el)el
 async function loadMessages(encodedProjectDir,sessionId,encodedRealPath,searchKeyword){
   if(currentSessionId===sessionId && !searchKeyword)return;
   currentSessionId=sessionId;
+
+  // 清理旧的搜索状态，防止内存泄漏
+  window._chatMessages = null;
+  window._chatSearchResults = [];
+  window._chatSearchIndex = -1;
+  clearTimeout(chatSearchTimer);
+
   document.querySelectorAll('.session-item').forEach(el=>el.classList.remove('active'));
   const sessEl=document.getElementById('sess-'+sessionId);
   if(sessEl){sessEl.classList.add('active');const p=sessEl.closest('.project-item');if(p&&!p.classList.contains('expanded'))p.classList.add('expanded');}
@@ -1438,7 +1445,7 @@ async function loadMessages(encodedProjectDir,sessionId,encodedRealPath,searchKe
     </div>
   </div>
   <div class="chat-search-bar" id="chatSearchBar">
-    <input type="text" class="chat-search-input" id="chatSearchInput" placeholder="搜索对话内容..." oninput="doChatSearch()" onkeydown="if(event.key==='Escape'){toggleChatSearch()}else if(event.key==='Enter'){chatSearchNext()}">
+    <input type="text" class="chat-search-input" id="chatSearchInput" placeholder="搜索对话内容..." oninput="debounceChatSearch()" onkeydown="if(event.key==='Escape'){toggleChatSearch()}else if(event.key==='Enter'){chatSearchNext()}">
     <span class="chat-search-info" id="chatSearchInfo"></span>
     <button class="chat-search-btn" onclick="chatSearchPrev()" title="上一个">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg>
@@ -1565,7 +1572,7 @@ function highlightInElement(element, keyword) {
     // 创建文档片段替换文本节点
     const frag = document.createDocumentFragment();
     let lastIdx = 0;
-    regex.lastIndex = 0;
+    regex.lastIndex = 0;  // test() 会推进 lastIndex，exec 前需重置
     let match;
 
     while ((match = regex.exec(text)) !== null) {
@@ -1590,6 +1597,9 @@ function highlightInElement(element, keyword) {
 
   return highlights;
 }
+
+let chatSearchTimer = null;
+function debounceChatSearch() { clearTimeout(chatSearchTimer); chatSearchTimer = setTimeout(doChatSearch, 200); }
 
 function doChatSearch() {
   const input = document.getElementById('chatSearchInput');
@@ -2066,8 +2076,10 @@ async function showSkillsPlugins() {
 
     content.innerHTML = html;
 
-    // 监听 tab 切换事件
-    document.addEventListener('switchTab', (e) => renderTab(e.detail));
+    // 监听 tab 切换事件（先移除旧监听器防止泄漏）
+    if (window._switchTabHandler) document.removeEventListener('switchTab', window._switchTabHandler);
+    window._switchTabHandler = (e) => renderTab(e.detail);
+    document.addEventListener('switchTab', window._switchTabHandler);
 
     // 初始渲染
     renderTab('skills');
