@@ -1404,6 +1404,56 @@ body {
 .archive-item-actions { flex-shrink: 0; }
 .btn-sm { padding: 6px 12px; font-size: 12px; }
 
+/* Confirm dialog */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+}
+.confirm-overlay.show { display: flex; }
+.confirm-dialog {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 28px;
+  width: 380px;
+  text-align: center;
+}
+.confirm-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.confirm-icon.warning { background: #FEF3C7; color: #D97706; }
+.confirm-icon.danger { background: #FEE2E2; color: #DC2626; }
+.confirm-icon svg { width: 24px; height: 24px; }
+.confirm-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+.confirm-message {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+.confirm-btns {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
 /* Settings button */
 .btn-settings {
   display: flex;

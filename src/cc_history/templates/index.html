@@ -83,6 +83,19 @@
   </div>
 </div>
 
+<!-- 自定义确认对话框 -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-dialog">
+    <div class="confirm-icon" id="confirmIcon"></div>
+    <div class="confirm-title" id="confirmTitle"></div>
+    <div class="confirm-message" id="confirmMessage"></div>
+    <div class="confirm-btns">
+      <button class="btn" id="confirmCancel">取消</button>
+      <button class="btn btn-primary" id="confirmOk">确认</button>
+    </div>
+  </div>
+</div>
+
 <div class="settings-overlay" id="settingsOverlay">
   <div class="settings-dialog">
     <h3>设置</h3>
@@ -415,7 +428,14 @@ async function archiveProject(el) {
   const sessionIds = el.getAttribute('data-session-ids').split(',').filter(Boolean);
   if (!sessionIds.length) return;
 
-  if (!confirm(`确定要归档这 ${sessionIds.length} 个对话吗？`)) return;
+  const confirmed = await showConfirm({
+    title: '归档项目',
+    message: `确定要归档这 ${sessionIds.length} 个对话吗？归档后可在垃圾箱中查看。`,
+    type: 'warning',
+    confirmText: '归档'
+  });
+
+  if (!confirmed) return;
 
   try {
     for (const sessionId of sessionIds) {
@@ -445,6 +465,50 @@ async function resetSessionName(sessionId) {
   } catch(e) {
     alert('重置失败: ' + e.message);
   }
+}
+
+// 自定义确认对话框
+function showConfirm({title, message, type = 'warning', confirmText = '确认'}) {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('confirmOverlay');
+    const icon = document.getElementById('confirmIcon');
+    const titleEl = document.getElementById('confirmTitle');
+    const msgEl = document.getElementById('confirmMessage');
+    const okBtn = document.getElementById('confirmOk');
+    const cancelBtn = document.getElementById('confirmCancel');
+
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+    okBtn.textContent = confirmText;
+
+    // 设置图标
+    if (type === 'danger') {
+      icon.className = 'confirm-icon danger';
+      icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+    } else {
+      icon.className = 'confirm-icon warning';
+      icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+    }
+
+    overlay.classList.add('show');
+
+    const handleOk = () => {
+      overlay.classList.remove('show');
+      okBtn.removeEventListener('click', handleOk);
+      cancelBtn.removeEventListener('click', handleCancel);
+      resolve(true);
+    };
+
+    const handleCancel = () => {
+      overlay.classList.remove('show');
+      okBtn.removeEventListener('click', handleOk);
+      cancelBtn.removeEventListener('click', handleCancel);
+      resolve(false);
+    };
+
+    okBtn.addEventListener('click', handleOk);
+    cancelBtn.addEventListener('click', handleCancel);
+  });
 }
 
 // 显示归档对话列表
