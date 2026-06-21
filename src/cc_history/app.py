@@ -21,9 +21,11 @@ from .data import (
     get_skills,
     load_custom_names,
     load_favorites,
+    load_project_names,
     load_settings,
     save_custom_names,
     save_favorites,
+    save_project_names,
     save_settings,
 )
 
@@ -239,6 +241,59 @@ def api_set_custom_name():
     return jsonify({"ok": True})
 
 
+@app.route("/api/project-names")
+def api_get_project_names():
+    """获取所有自定义项目名称。"""
+    return jsonify(load_project_names())
+
+
+@app.route("/api/project-names", methods=["POST"])
+def api_set_project_name():
+    """设置自定义项目名称。"""
+    data = request.get_json(silent=True) or {}
+    project_key = data.get("projectKey", "")
+    name = data.get("name", "")
+    if not project_key:
+        return _json_error("缺少 projectKey", 400)
+    if name is None:
+        name = ""
+    name = str(name).strip()[:120]
+
+    names = load_project_names()
+    if name:
+        names[project_key] = name
+    else:
+        names.pop(project_key, None)
+    save_project_names(names)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/open-folder", methods=["POST"])
+def api_open_folder():
+    """在文件管理器中打开项目目录。"""
+    import subprocess
+    import sys
+    data = request.get_json(silent=True) or {}
+    path = data.get("path", "")
+    if not path:
+        return _json_error("缺少 path", 400)
+
+    p = Path(path)
+    if not p.exists():
+        return _json_error(f"路径不存在：{path}", 404)
+
+    try:
+        if sys.platform == "win32":
+            subprocess.Popen(["explorer", str(p)])
+        elif sys.platform == "darwin":
+            subprocess.Popen(["open", str(p)])
+        else:
+            subprocess.Popen(["xdg-open", str(p)])
+        return jsonify({"ok": True})
+    except Exception as exc:
+        return _json_error(f"打开失败：{exc}", 500)
+
+
 @app.route("/api/settings")
 def api_get_settings():
     """获取设置。"""
@@ -382,6 +437,38 @@ def api_resume():
 
     # UUID 已验证格式，直接使用；路径用 -LiteralPath 防止注入
     script = f"Set-Location -LiteralPath '{str(cwd).replace(chr(39), chr(39)*2)}'; claude --resume '{session_id}'"
+
+    try:
+        creationflags = getattr(subprocess, "CREATE_NEW_CONSOLE", 0)
+        subprocess.Popen(
+            [shell, "-NoExit", "-Command", script],
+            creationflags=creationflags,
+        )
+        return jsonify({"ok": True, "message": "已启动"})
+    except Exception as exc:
+        return _json_error(f"启动失败：{exc}", 500)
+
+
+@app.route("/api/resume-new")
+def api_resume_new():
+    """在指定项目目录启动新的 Claude Code 对话。"""
+    import shutil
+
+    project_dir = request.args.get("projectDir", "")
+    if not project_dir:
+        return _json_error("缺少 projectDir", 400)
+
+    cwd = Path(project_dir).expanduser()
+    if not cwd.exists():
+        return _json_error(f"项目路径不存在：{project_dir}", 404)
+
+    # 选择可用的 shell：优先 pwsh，其次 powershell
+    shell = shutil.which("pwsh") or shutil.which("powershell")
+    if not shell:
+        return _json_error("未找到 PowerShell，请确认 pwsh 或 powershell 在 PATH 中", 500)
+
+    # 启动新的 Claude Code 对话
+    script = f"Set-Location -LiteralPath '{str(cwd).replace(chr(39), chr(39)*2)}'; claude"
 
     try:
         creationflags = getattr(subprocess, "CREATE_NEW_CONSOLE", 0)

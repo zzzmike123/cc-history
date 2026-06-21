@@ -272,6 +272,30 @@ def save_custom_names(names):
     path.write_text(json.dumps(names, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def get_project_names_path():
+    """返回项目自定义名称文件路径"""
+    return get_claude_dir() / "cc-history-project-names.json"
+
+
+def load_project_names():
+    """加载自定义项目名称。"""
+    path = get_project_names_path()
+    if path.exists():
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            return data if isinstance(data, dict) else {}
+        except Exception:
+            pass
+    return {}
+
+
+def save_project_names(names):
+    """保存自定义项目名称。"""
+    path = get_project_names_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(names, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def get_favorites_path():
     """返回收藏文件路径"""
     return get_claude_dir() / "cc-history-favorites.json"
