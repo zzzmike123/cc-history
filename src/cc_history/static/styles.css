@@ -334,6 +334,7 @@ body {
   margin: 2px 0;
   transition: var(--transition);
   border-left: 3px solid transparent;
+  position: relative;
 }
 .session-item:hover { background: var(--bg-hover); }
 .session-item.active {
@@ -354,6 +355,53 @@ body {
   white-space: nowrap;
   line-height: 1.5;
 }
+
+.session-menu-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+  opacity: 0;
+}
+.session-item:hover .session-menu-btn { opacity: 1; }
+.session-menu-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.session-menu {
+  display: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  padding: 4px;
+  position: absolute;
+  right: 8px;
+  top: 100%;
+  z-index: 100;
+  min-width: 130px;
+}
+.session-menu.show { display: block; }
+
+.session-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--text-primary);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-weight: 500;
+}
+.session-menu-item:hover { background: var(--bg-hover); }
+.session-menu-item svg { color: var(--text-muted); }
 
 /* Content Area */
 .content {
@@ -1298,6 +1346,41 @@ body {
 /* Custom name styling */
 .session-name { font-size: 12px; color: var(--text-primary); font-weight: 600; }
 .session-original { font-size: 11px; color: var(--text-muted); }
+
+/* Archive list */
+.archive-list { display: flex; flex-direction: column; gap: 10px; }
+.archive-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: var(--transition);
+}
+.archive-item:hover { border-color: var(--accent); box-shadow: var(--shadow-sm); }
+.archive-item-info { flex: 1; min-width: 0; cursor: pointer; }
+.archive-item-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.archive-item-meta {
+  display: flex;
+  gap: 16px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.archive-item-project { color: var(--accent); font-weight: 500; }
+.archive-item-time { font-weight: 500; }
+.archive-item-msgs { font-weight: 500; }
+.archive-item-actions { flex-shrink: 0; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
 
 /* Settings button */
 .btn-settings {

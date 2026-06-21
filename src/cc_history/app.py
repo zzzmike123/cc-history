@@ -19,10 +19,12 @@ from .data import (
     get_session_messages,
     get_sessions,
     get_skills,
+    load_archives,
     load_custom_names,
     load_favorites,
     load_project_names,
     load_settings,
+    save_archives,
     save_custom_names,
     save_favorites,
     save_project_names,
@@ -346,6 +348,33 @@ def api_toggle_favorite():
         favs[session_id] = True
     save_favorites(favs)
     return jsonify({"ok": True, "favorited": session_id in favs})
+
+
+@app.route("/api/archives")
+def api_get_archives():
+    """获取归档列表。"""
+    return jsonify(load_archives())
+
+
+@app.route("/api/archives", methods=["POST"])
+def api_toggle_archive():
+    """切换归档状态。"""
+    data = request.get_json(silent=True) or {}
+    session_id = data.get("sessionId", "")
+    if not session_id:
+        return _json_error("缺少 sessionId", 400)
+    if not _is_valid_uuid(session_id):
+        return _json_error("无效的会话 ID", 400)
+
+    archives = load_archives()
+    if archives.get(session_id):
+        archives.pop(session_id, None)
+        save_archives(archives)
+        return jsonify({"ok": True, "archived": False})
+    else:
+        archives[session_id] = True
+        save_archives(archives)
+        return jsonify({"ok": True, "archived": True})
 
 
 @app.route("/api/export")

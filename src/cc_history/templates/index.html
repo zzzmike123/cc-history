@@ -33,6 +33,9 @@
   <button class="btn-settings" onclick="showSkillsPlugins()" title="Skills & 插件">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
   </button>
+  <button class="btn-settings" onclick="showArchives()" title="归档对话">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+  </button>
   <button class="btn-settings" onclick="openSettings()" title="设置">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
   </button>
@@ -53,17 +56,6 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
       <div class="content-empty-text">选择一个会话开始查看</div>
     </div>
-  </div>
-</div>
-
-<div class="context-menu" id="contextMenu">
-  <div class="context-menu-item" id="ctxRename">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-    重命名
-  </div>
-  <div class="context-menu-item" id="ctxReset">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
-    恢复默认
   </div>
 </div>
 
@@ -127,8 +119,6 @@ let searchTimer = null;
 let currentSessionId = null;
 let customNames = {};
 let favorites = {};
-let ctxSessionId = '';
-let ctxSessionName = '';
 
 document.addEventListener('keydown', e => {
   // Ctrl+K: 聚焦全局搜索
@@ -174,25 +164,37 @@ async function loadProjects() {
   const list = document.getElementById('projectList');
   list.innerHTML = '<div class="loading" id="loadingIndicator"><div class="spinner"></div> 加载中...</div>';
   try {
-    const [loadedProjects, loadedNames, loadedFavs, loadedProjNames] = await Promise.all([
+    const [loadedProjects, loadedNames, loadedFavs, loadedProjNames, loadedArchives] = await Promise.all([
       fetchJson('/api/projects'),
       fetchJson('/api/custom-names'),
       fetchJson('/api/favorites'),
-      fetchJson('/api/project-names')
+      fetchJson('/api/project-names'),
+      fetchJson('/api/archives')
     ]);
     projects = Array.isArray(loadedProjects) ? loadedProjects : [];
     customNames = loadedNames && typeof loadedNames === 'object' ? loadedNames : {};
     favorites = loadedFavs && typeof loadedFavs === 'object' ? loadedFavs : {};
     projectNames = loadedProjNames && typeof loadedProjNames === 'object' ? loadedProjNames : {};
+    archives = loadedArchives && typeof loadedArchives === 'object' ? loadedArchives : {};
 
+    // 统计时排除归档会话
     let ts=0,tm=0;
-    for(const p of projects){const ss=Array.isArray(p.sessions)?p.sessions:[];ts+=ss.length;for(const s of ss)tm+=Number(s.messageCount)||0;}
+    for(const p of projects){
+      const ss=Array.isArray(p.sessions)?p.sessions:[];
+      for(const s of ss){
+        if(!archives[s.sessionId]){
+          ts++;
+          tm+=Number(s.messageCount)||0;
+        }
+      }
+    }
+    const archiveCount = Object.keys(archives).length;
     document.getElementById('stats').innerHTML = `
       <div class="stat"><span class="stat-value">${projects.length}</span><span class="stat-label">项目</span></div>
       <div class="stat"><span class="stat-value">${ts}</span><span class="stat-label">会话</span></div>
       <div class="stat"><span class="stat-value">${tm}</span><span class="stat-label">消息</span></div>
     `;
-    document.getElementById('sidebarCount').textContent = ts+' 会话';
+    document.getElementById('sidebarCount').textContent = ts + ' 会话' + (archiveCount > 0 ? ` (${archiveCount} 归档)` : '');
     renderProjectList();
   } catch(e) {
     showProjectError(e.message);
@@ -256,7 +258,12 @@ function renderProjectList(filter='') {
   for(const proj of projects){
     const allSessions=Array.isArray(proj.sessions)?proj.sessions:[];
     const realPath=String(proj.realPath||proj.name||'');
-    const sessions=allSessions.filter(s=>{if(!lf)return true;return String(s.firstMessage||'').toLowerCase().includes(lf)||realPath.toLowerCase().includes(lf);});
+    // 过滤归档会话和搜索关键词
+    const sessions=allSessions.filter(s=>{
+      if(archives[s.sessionId]) return false; // 归档的不显示
+      if(!lf) return true;
+      return String(s.firstMessage||'').toLowerCase().includes(lf)||realPath.toLowerCase().includes(lf);
+    });
     if(!sessions.length&&lf)continue;
     const totalMsgs=sessions.reduce((a,s)=>a+s.messageCount,0);
     const projId=proj.name.replace(/[^a-zA-Z0-9]/g,'_');
@@ -299,15 +306,35 @@ function renderProjectList(filter='') {
       const origTitle=cn?escapeHtml(s.firstMessage):'';
       const tooltip=cn?`title="${origTitle}"`:'';
       const isFav=favorites[s.sessionId];
-      html+=`<div class="session-item" id="sess-${s.sessionId}" data-realpath="${rp}" data-orig="${escapeHtml(s.firstMessage)}" ${tooltip} onclick="loadMessages('${encodeURIComponent(proj.projectDir||'')}','${s.sessionId}','${rp}')" oncontextmenu="showContextMenu(event,'${s.sessionId}','${escapeHtml(s.firstMessage).replace(/'/g,"\\'")}')">
+      const sessMenuId = 'sm-' + s.sessionId.slice(0,8);
+      html+=`<div class="session-item" id="sess-${s.sessionId}" data-realpath="${rp}" data-orig="${escapeHtml(s.firstMessage)}" ${tooltip} onclick="loadMessages('${encodeURIComponent(proj.projectDir||'')}','${s.sessionId}','${rp}')">
         <div class="session-top">
           <span class="session-time">${formatTime(s.lastTimestamp)}</span>
           <span class="session-right">
-            <span class="session-fav ${isFav?'active':''}" onclick="event.stopPropagation();toggleFavorite('${s.sessionId}')" title="${isFav?'取消收藏':'收藏'}">${isFav?'★':'☆'}</span>
-            <span class="session-msgs">${s.messageCount}</span>
+            <button class="session-menu-btn" onclick="event.stopPropagation();toggleSessionMenu('${sessMenuId}')" title="操作">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle></svg>
+            </button>
           </span>
         </div>
         <div class="session-preview">${dispName}</div>
+        <div class="session-menu" id="${sessMenuId}">
+          <div class="session-menu-item" onclick="event.stopPropagation();toggleArchiveSession('${s.sessionId}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            归档
+          </div>
+          <div class="session-menu-item" onclick="event.stopPropagation();openRename('${s.sessionId}','${escapeHtml(cn||'')}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            重命名
+          </div>
+          <div class="session-menu-item" onclick="event.stopPropagation();resetSessionName('${s.sessionId}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+            恢复默认
+          </div>
+          <div class="session-menu-item" onclick="event.stopPropagation();toggleFavorite('${s.sessionId}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polygon points="${isFav?'12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2':'12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'}"></polygon></svg>
+            ${isFav?'取消收藏':'收藏'}
+          </div>
+        </div>
       </div>`;
     }
     html+='</div></div>';
@@ -327,6 +354,139 @@ async function toggleFavorite(sessionId) {
     else delete favorites[sessionId];
     renderProjectList();
   } catch(e) { console.error(e); }
+}
+
+// 会话菜单
+let openSessionMenuId = null;
+
+function toggleSessionMenu(menuId) {
+  const menu = document.getElementById(menuId);
+  if (!menu) return;
+
+  // 关闭其他会话菜单
+  if (openSessionMenuId && openSessionMenuId !== menuId) {
+    const oldMenu = document.getElementById(openSessionMenuId);
+    if (oldMenu) oldMenu.classList.remove('show');
+  }
+
+  menu.classList.toggle('show');
+  openSessionMenuId = menu.classList.contains('show') ? menuId : null;
+}
+
+// 归档会话
+let archives = {};
+
+async function loadArchives() {
+  try {
+    archives = await fetchJson('/api/archives') || {};
+  } catch(e) { archives = {}; }
+}
+
+async function toggleArchiveSession(sessionId) {
+  try {
+    const data = await fetchJson('/api/archives', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({sessionId})
+    });
+    if (data.archived) {
+      archives[sessionId] = true;
+    } else {
+      delete archives[sessionId];
+    }
+    renderProjectList();
+  } catch(e) {
+    alert('归档失败: ' + e.message);
+  }
+}
+
+// 恢复默认名称
+async function resetSessionName(sessionId) {
+  try {
+    await fetchJson('/api/custom-names', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({sessionId, name: ''})
+    });
+    delete customNames[sessionId];
+    renderProjectList();
+  } catch(e) {
+    alert('重置失败: ' + e.message);
+  }
+}
+
+// 显示归档对话列表
+async function showArchives() {
+  const content = document.getElementById('content');
+  content.innerHTML = '<div class="loading"><div class="spinner"></div> 加载归档...</div>';
+
+  await loadArchives();
+  const archiveIds = Object.keys(archives);
+
+  if (archiveIds.length === 0) {
+    content.innerHTML = `
+      <div class="content-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        <div class="content-empty-text">没有归档的对话</div>
+      </div>`;
+    return;
+  }
+
+  // 获取所有会话数据
+  let allSessions = [];
+  try {
+    const projectsData = await fetchJson('/api/projects');
+    for (const proj of projectsData) {
+      for (const s of (proj.sessions || [])) {
+        if (archives[s.sessionId]) {
+          allSessions.push({
+            ...s,
+            project: proj.name,
+            realPath: proj.realPath || proj.name,
+            projectDir: proj.projectDir || ''
+          });
+        }
+      }
+    }
+  } catch(e) {
+    content.innerHTML = `<div class="content-empty"><div class="content-empty-text">加载失败：${escapeHtml(e.message)}</div></div>`;
+    return;
+  }
+
+  let html = `
+    <div class="stats-view">
+      <div class="stats-header">
+        <h2>归档对话</h2>
+        <button class="btn-action" onclick="document.getElementById('content').innerHTML='<div class=\\'content-empty\\'><svg viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><path d=\\'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\\'></path></svg><div class=\\'content-empty-text\\'>选择一个会话开始查看</div></div>'">${iconBack} 返回</button>
+      </div>
+      <div class="archive-list">`;
+
+  for (const s of allSessions) {
+    const cn = customNames[s.sessionId];
+    const dispName = cn ? escapeHtml(cn) : escapeHtml(s.firstMessage || '(无内容)');
+    const rp = encodeURIComponent(s.realPath);
+
+    html += `
+      <div class="archive-item">
+        <div class="archive-item-info" onclick="loadMessages('${encodeURIComponent(s.projectDir)}','${s.sessionId}','${rp}')">
+          <div class="archive-item-name">${dispName}</div>
+          <div class="archive-item-meta">
+            <span class="archive-item-project">${escapeHtml(projectNames[s.project] || s.realPath)}</span>
+            <span class="archive-item-time">${formatTime(s.lastTimestamp)}</span>
+            <span class="archive-item-msgs">${s.messageCount} 条</span>
+          </div>
+        </div>
+        <div class="archive-item-actions">
+          <button class="btn-action btn-sm" onclick="toggleArchiveSession('${s.sessionId}')" title="取消归档">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+            取消归档
+          </button>
+        </div>
+      </div>`;
+  }
+
+  html += '</div></div>';
+  content.innerHTML = html;
 }
 
 function toggleProject(id){const el=document.getElementById('proj-'+id);if(el)el.classList.toggle('expanded');}
@@ -1248,53 +1408,10 @@ async function showSkillsPlugins() {
   }
 }
 
-// Context Menu
-document.addEventListener('click',()=>document.getElementById('contextMenu').classList.remove('show'));
-
-function showContextMenu(e,sessionId,origName){
-  e.preventDefault();
-  e.stopPropagation();
-  ctxSessionId=sessionId;
-  ctxSessionName=origName;
-  const menu=document.getElementById('contextMenu');
-  menu.style.left=e.clientX+'px';
-  menu.style.top=e.clientY+'px';
-  menu.classList.add('show');
-}
-
-document.getElementById('ctxRename').addEventListener('click',()=>{
-  document.getElementById('contextMenu').classList.remove('show');
-  openRename(ctxSessionId,customNames[ctxSessionId]||'');
-});
-
-document.getElementById('ctxReset').addEventListener('click',async()=>{
-  document.getElementById('contextMenu').classList.remove('show');
-  await fetch('/api/custom-names',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:ctxSessionId,name:''})});
-  delete customNames[ctxSessionId];
-
-  // 只更新当前会话的显示名称
-  const sessEl=document.getElementById('sess-'+ctxSessionId);
-  if(sessEl){
-    const preview=sessEl.querySelector('.session-preview');
-    const origTitle=sessEl.getAttribute('data-orig')||'';
-    if(preview) preview.textContent=origTitle;
-    sessEl.removeAttribute('title');
-  }
-
-  // 更新聊天标题
-  if(currentSessionId===ctxSessionId){
-    const chatTitle=document.querySelector('.chat-title');
-    if(chatTitle){
-      chatTitle.textContent=`会话 ${ctxSessionId.slice(0,8)}`;
-      chatTitle.removeAttribute('title');
-    }
-  }
-});
-
 function openRename(sessionId,currentName){
   const overlay=document.getElementById('renameOverlay');
   const input=document.getElementById('renameInput');
-  ctxSessionId=sessionId;
+  window._renameSessionId=sessionId;
   input.value=currentName;
   overlay.classList.add('show');
   setTimeout(()=>input.focus(),50);
@@ -1307,36 +1424,35 @@ function closeRename(){
 async function confirmRename(){
   const input=document.getElementById('renameInput');
   const name=input.value.trim();
+  const sessionId=window._renameSessionId;
   closeRename();
-  await fetch('/api/custom-names',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:ctxSessionId,name})});
-  if(name)customNames[ctxSessionId]=name;
-  else delete customNames[ctxSessionId];
 
-  // 只更新当前会话的显示名称，不重新渲染整个列表
-  const sessEl=document.getElementById('sess-'+ctxSessionId);
-  if(sessEl){
-    const preview=sessEl.querySelector('.session-preview');
-    const origTitle=sessEl.getAttribute('data-orig')||'';
-    if(preview){
-      if(name){
-        preview.textContent=name;
-        sessEl.setAttribute('title',origTitle);
-      }else{
-        preview.textContent=origTitle;
-        sessEl.removeAttribute('title');
-      }
-    }
-  }
-
-  // 更新聊天标题
-  if(currentSessionId===ctxSessionId){
-    const chatTitle=document.querySelector('.chat-title');
-    if(chatTitle){
-      const displayTitle=name||`会话 ${ctxSessionId.slice(0,8)}`;
-      chatTitle.textContent=displayTitle;
-      chatTitle.setAttribute('title',name?`原始: 会话 ${ctxSessionId.slice(0,8)}`:'');
-    }
+  try {
+    await fetchJson('/api/custom-names', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({sessionId, name})
+    });
+    if(name) customNames[sessionId] = name;
+    else delete customNames[sessionId];
+    renderProjectList();
+  } catch(e) {
+    alert('重命名失败: ' + e.message);
   }
 }
+
+// 点击空白处关闭所有菜单
+document.addEventListener('click', () => {
+  if (openMenuId) {
+    const menu = document.getElementById('menu-' + openMenuId);
+    if (menu) menu.classList.remove('show');
+    openMenuId = null;
+  }
+  if (openSessionMenuId) {
+    const menu = document.getElementById(openSessionMenuId);
+    if (menu) menu.classList.remove('show');
+    openSessionMenuId = null;
+  }
+});
 </script>
 </body>

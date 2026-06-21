@@ -296,6 +296,30 @@ def save_project_names(names):
     path.write_text(json.dumps(names, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def get_archives_path():
+    """返回归档文件路径"""
+    return get_claude_dir() / "cc-history-archives.json"
+
+
+def load_archives():
+    """加载归档的会话 ID。"""
+    path = get_archives_path()
+    if path.exists():
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            return data if isinstance(data, dict) else {}
+        except Exception:
+            pass
+    return {}
+
+
+def save_archives(archives):
+    """保存归档的会话 ID。"""
+    path = get_archives_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(archives, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def get_favorites_path():
     """返回收藏文件路径"""
     return get_claude_dir() / "cc-history-favorites.json"
