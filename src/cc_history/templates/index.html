@@ -394,9 +394,15 @@ async function toggleArchiveSession(sessionId) {
     } else {
       delete archives[sessionId];
     }
-    renderProjectList();
+    // 如果当前在归档视图，刷新归档列表；否则刷新项目列表
+    const archiveList = document.querySelector('.archive-list');
+    if (archiveList) {
+      showArchives();
+    } else {
+      renderProjectList();
+    }
   } catch(e) {
-    alert('归档失败: ' + e.message);
+    alert('操作失败: ' + e.message);
   }
 }
 
