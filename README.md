@@ -20,7 +20,7 @@
 
 ### 方式一：下载安装包（Windows 推荐）
 
-从 GitHub Releases 下载 `CC-History-Setup-1.2.0.exe`，双击安装即可。
+从 GitHub Releases 下载 `CC-History-Setup-1.3.0.exe`，双击安装即可。
 
 安装器会自动创建开始菜单项，并可选择创建桌面快捷方式。
 
@@ -79,24 +79,26 @@ $env:CLAUDE_DIR="D:\other\.claude"; cc-history
 | 快捷键 | 功能 |
 |--------|------|
 | `Ctrl+K` | 聚焦搜索框 |
-| `Esc` | 清空搜索 |
-| 右键会话 | 重命名 / 恢复默认 |
+| `Esc` | 清空搜索 / 关闭弹窗 |
+| `Ctrl+F` | 在当前对话中搜索 |
+| `Ctrl+E` | 导出当前会话 |
+| 会话三点菜单 | 归档 / 重命名 / 恢复默认 / 收藏 |
 
 ## 数据来源
 
-应用读取以下 Claude Code 本地数据（只读，不修改）：
+应用只读 Claude Code 原始历史数据，不修改原始 JSONL：
 
 - `~/.claude/history.jsonl` — 用户消息索引
 - `~/.claude/projects/<project>/*.jsonl` — 完整对话记录
 
-自定义名称存储在 `~/.claude/cc-history-names.json`。
+应用自己的状态会单独写入配置文件：自定义名称、项目名称、收藏、归档位于 `~/.claude/cc-history-*.json`，设置位于 `~/.cc-history.json`。
 
 ## 技术栈
 
 - **后端**：Python + Flask
 - **前端**：HTML + CSS + JavaScript（内嵌）
 - **桌面窗口**：pywebview
-- **设计**：Inter 字体 + 浅色主题 + SVG 图标
+- **设计**：Inter 字体 + 浅色/暗色主题 + SVG 图标
 
 ## 系统要求
 
@@ -123,7 +125,7 @@ dist\CC History.exe
 如果本机安装了 Inno Setup 6，还会继续生成一键安装包：
 
 ```text
-installer\output\CC-History-Setup-1.2.0.exe
+installer\output\CC-History-Setup-1.3.0.exe
 ```
 
 如果缺少 Inno Setup，可先安装：

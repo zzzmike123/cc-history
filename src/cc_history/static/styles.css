@@ -1540,3 +1540,29 @@ body {
 .theme-btn .theme-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
 
 .settings-btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+
+@media (max-width: 900px) {
+  .header { gap: 12px; padding: 10px 14px; }
+  .logo-text { display: none; }
+  .stats { gap: 12px; }
+  .stat-value { font-size: 16px; }
+  .stat-label { font-size: 9px; }
+  .sidebar { width: 260px; }
+  .chat-header { padding: 14px 18px; flex-direction: column; gap: 12px; }
+  .chat-actions { width: 100%; flex-wrap: wrap; }
+  .btn-action, .btn-resume { padding: 8px 12px; }
+  .messages { padding: 18px; }
+  .msg-body { max-width: 86%; }
+  .stats-view, .skills-plugins-view { padding: 18px; }
+  .stats-grid { grid-template-columns: 1fr; gap: 12px; }
+  .skills-plugins-grid { grid-template-columns: 1fr; }
+  .stats-hours, .stats-weekdays, .stats-trend-bars { gap: 4px; }
+}
+
+@media (max-width: 720px) {
+  .header { flex-wrap: wrap; }
+  .search-wrapper { order: 2; flex-basis: 100%; max-width: none; }
+  .sidebar { width: 220px; }
+  .chat-meta { flex-direction: column; gap: 6px; }
+  .msg-body { max-width: 92%; }
+}

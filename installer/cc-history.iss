@@ -1,5 +1,5 @@
 #define MyAppName "CC History"
-#define MyAppVersion "1.2.0"
+#define MyAppVersion "1.3.0"
 #define MyAppPublisher "zyz"
 #define MyAppURL "https://github.com/zzzmike123/cc-history"
 #define MyAppExeName "CC History.exe"

@@ -5,7 +5,7 @@
 CC History 是 Claude Code 历史对话查看器，本地桌面应用，用于浏览、搜索和管理 Claude Code 的历史会话。
 
 - **仓库**: https://github.com/zzzmike123/cc-history
-- **当前版本**: v1.2.0
+- **当前版本**: v1.3.0
 - **技术栈**: Python + Flask + pywebview + HTML/CSS/JS
 
 ## 知识库

@@ -88,6 +88,27 @@ def _get_session_by_id(session_id):
             return session
     return None
 
+def _resolve_known_project_path(path):
+    """Return a resolved path only when it belongs to a known Claude project."""
+    if not path:
+        return None
+    try:
+        requested = Path(path).expanduser().resolve()
+    except OSError:
+        return None
+
+    for session in _get_sessions_cached():
+        real_path = session.get("realProjectPath")
+        if not real_path:
+            continue
+        try:
+            known = Path(real_path).expanduser().resolve()
+        except OSError:
+            continue
+        if requested == known:
+            return requested
+    return None
+
 
 def _find_free_port():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -280,7 +301,9 @@ def api_open_folder():
     if not path:
         return _json_error("缺少 path", 400)
 
-    p = Path(path)
+    p = _resolve_known_project_path(path)
+    if p is None:
+        return _json_error("无效的项目路径", 400)
     if not p.exists():
         return _json_error(f"路径不存在：{path}", 404)
 
@@ -500,7 +523,9 @@ def api_resume_new():
     if not project_dir:
         return _json_error("缺少 projectDir", 400)
 
-    cwd = Path(project_dir).expanduser()
+    cwd = _resolve_known_project_path(project_dir)
+    if cwd is None:
+        return _json_error("无效的项目路径", 400)
     if not cwd.exists():
         return _json_error(f"项目路径不存在：{project_dir}", 404)
 

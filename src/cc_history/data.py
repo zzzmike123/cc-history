@@ -349,7 +349,8 @@ def get_detailed_stats():
     from collections import Counter
     from datetime import datetime, timedelta
 
-    sessions = get_sessions()
+    archives = load_archives()
+    sessions = [s for s in get_sessions() if not archives.get(s["sessionId"])]
     projects_dir = _get_projects_dir()
 
     # 时间统计
@@ -366,6 +367,8 @@ def get_detailed_stats():
             if not project_dir.is_dir():
                 continue
             for jsonl_file in project_dir.glob("*.jsonl"):
+                if archives.get(jsonl_file.stem):
+                    continue
                 for obj in _read_jsonl(jsonl_file):
                     msg_type = obj.get("type")
                     ts = obj.get("timestamp", "")

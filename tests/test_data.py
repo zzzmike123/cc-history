@@ -5,7 +5,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from src.cc_history.app import _is_valid_uuid, _is_under_projects_dir
+from src.cc_history.app import _is_valid_uuid, _is_under_projects_dir, _resolve_known_project_path
 from src.cc_history.data import (
     _extract_content,
     _parse_skill_md,
@@ -71,6 +71,21 @@ class TestPathValidation:
         mock_dir.return_value = Path.home() / ".claude"
         projects = Path.home() / ".claude" / "projects"
         assert _is_under_projects_dir(str(projects)) is True
+    @patch("src.cc_history.app._get_sessions_cached")
+    def test_resolve_known_project_path(self, mock_sessions, tmp_path):
+        project = tmp_path / "project"
+        project.mkdir()
+        mock_sessions.return_value = [{"realProjectPath": str(project)}]
+        assert _resolve_known_project_path(str(project)) == project.resolve()
+
+    @patch("src.cc_history.app._get_sessions_cached")
+    def test_reject_unknown_project_path(self, mock_sessions, tmp_path):
+        known = tmp_path / "known"
+        other = tmp_path / "other"
+        known.mkdir()
+        other.mkdir()
+        mock_sessions.return_value = [{"realProjectPath": str(known)}]
+        assert _resolve_known_project_path(str(other)) is None
 
 
 class TestExtractContent:
