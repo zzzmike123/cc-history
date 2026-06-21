@@ -411,12 +411,12 @@ async function toggleArchiveSession(sessionId) {
     } else {
       delete archives[sessionId];
     }
-    // 如果当前在归档视图，刷新归档列表；否则刷新项目列表
+    // 始终刷新左侧项目列表
+    renderProjectList();
+    // 如果当前在归档视图，也刷新归档列表
     const archiveList = document.querySelector('.archive-list');
     if (archiveList) {
       showArchives();
-    } else {
-      renderProjectList();
     }
   } catch(e) {
     alert('操作失败: ' + e.message);
