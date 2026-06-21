@@ -11,6 +11,7 @@ a = Analysis(
     binaries=[],
     datas=[
         (str(ROOT / "src" / "cc_history" / "templates"), "cc_history/templates"),
+        (str(ROOT / "src" / "cc_history" / "static"), "cc_history/static"),
         (str(ROOT / "cat.ico"), "."),
     ],
     hiddenimports=[
@@ -51,8 +52,4 @@ exe = EXE(
     entitlements_file=None,
     icon=str(ROOT / "cat.ico"),
 )
-
-
-
-
 
