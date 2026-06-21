@@ -217,7 +217,7 @@ body {
 
 .project-list { flex: 1; overflow-y: auto; padding: 8px 10px; }
 
-.project-item { margin: 4px 0; }
+.project-item { margin: 4px 0; position: relative; }
 
 .project-header {
   padding: 10px 12px;
@@ -302,7 +302,11 @@ body {
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
   padding: 6px;
-  margin: 4px 10px 6px 36px;
+  position: absolute;
+  right: 10px;
+  top: 100%;
+  z-index: 100;
+  min-width: 160px;
 }
 .project-menu.show { display: block; }
 
