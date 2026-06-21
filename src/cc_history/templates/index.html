@@ -296,6 +296,10 @@ function renderProjectList(filter='') {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             新开对话
           </div>
+          <div class="project-menu-item" onclick="event.stopPropagation();archiveProject(this)" data-session-ids="${sessions.map(s=>s.sessionId).join(',')}" style="color: var(--text-muted);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            归档项目
+          </div>
         </div>
       </div>
       <div class="session-list">`;
@@ -406,6 +410,28 @@ async function toggleArchiveSession(sessionId) {
   }
 }
 
+// 归档整个项目（所有会话）
+async function archiveProject(el) {
+  const sessionIds = el.getAttribute('data-session-ids').split(',').filter(Boolean);
+  if (!sessionIds.length) return;
+
+  if (!confirm(`确定要归档这 ${sessionIds.length} 个对话吗？`)) return;
+
+  try {
+    for (const sessionId of sessionIds) {
+      await fetchJson('/api/archives', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({sessionId, archive: true})
+      });
+      archives[sessionId] = true;
+    }
+    renderProjectList();
+  } catch(e) {
+    alert('归档失败: ' + e.message);
+  }
+}
+
 // 恢复默认名称
 async function resetSessionName(sessionId) {
   try {
@@ -443,15 +469,13 @@ async function showArchives() {
   try {
     const projectsData = await fetchJson('/api/projects');
     for (const proj of projectsData) {
-      for (const s of (proj.sessions || [])) {
-        if (archives[s.sessionId]) {
-          allSessions.push({
-            ...s,
-            project: proj.name,
-            realPath: proj.realPath || proj.name,
-            projectDir: proj.projectDir || ''
-          });
-        }
+      const projSessions = (proj.sessions || []).filter(s => archives[s.sessionId]);
+      if (projSessions.length > 0) {
+        allSessions.push({
+          projectName: proj.name,
+          realPath: proj.realPath || proj.name,
+          sessions: projSessions
+        });
       }
     }
   } catch(e) {
@@ -464,34 +488,45 @@ async function showArchives() {
       <div class="stats-header">
         <h2>归档对话</h2>
         <button class="btn-action" onclick="document.getElementById('content').innerHTML='<div class=\\'content-empty\\'><svg viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><path d=\\'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\\'></path></svg><div class=\\'content-empty-text\\'>选择一个会话开始查看</div></div>'">${iconBack} 返回</button>
-      </div>
-      <div class="archive-list">`;
-
-  for (const s of allSessions) {
-    const cn = customNames[s.sessionId];
-    const dispName = cn ? escapeHtml(cn) : escapeHtml(s.firstMessage || '(无内容)');
-    const rp = encodeURIComponent(s.realPath);
-
-    html += `
-      <div class="archive-item">
-        <div class="archive-item-info" onclick="loadMessages('${encodeURIComponent(s.projectDir)}','${s.sessionId}','${rp}')">
-          <div class="archive-item-name">${dispName}</div>
-          <div class="archive-item-meta">
-            <span class="archive-item-project">${escapeHtml(projectNames[s.project] || s.realPath)}</span>
-            <span class="archive-item-time">${formatTime(s.lastTimestamp)}</span>
-            <span class="archive-item-msgs">${s.messageCount} 条</span>
-          </div>
-        </div>
-        <div class="archive-item-actions">
-          <button class="btn-action btn-sm" onclick="toggleArchiveSession('${s.sessionId}')" title="取消归档">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-            取消归档
-          </button>
-        </div>
       </div>`;
+
+  for (const proj of allSessions) {
+    const projDisplayName = projectNames[proj.projectName] || proj.realPath;
+    html += `
+      <div class="archive-project">
+        <div class="archive-project-header">
+          <div class="archive-project-name">${escapeHtml(projDisplayName)}</div>
+          <div class="archive-project-count">${proj.sessions.length} 个对话</div>
+        </div>
+        <div class="archive-list">`;
+
+    for (const s of proj.sessions) {
+      const cn = customNames[s.sessionId];
+      const dispName = cn ? escapeHtml(cn) : escapeHtml(s.firstMessage || '(无内容)');
+      const rp = encodeURIComponent(proj.realPath);
+
+      html += `
+        <div class="archive-item">
+          <div class="archive-item-info" onclick="loadMessages('${encodeURIComponent(s.projectDir || '')}','${s.sessionId}','${rp}')">
+            <div class="archive-item-name">${dispName}</div>
+            <div class="archive-item-meta">
+              <span class="archive-item-time">${formatTime(s.lastTimestamp)}</span>
+              <span class="archive-item-msgs">${s.messageCount} 条</span>
+            </div>
+          </div>
+          <div class="archive-item-actions">
+            <button class="btn-action btn-sm" onclick="toggleArchiveSession('${s.sessionId}')" title="取消归档">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+              取消归档
+            </button>
+          </div>
+        </div>`;
+    }
+
+    html += '</div></div>';
   }
 
-  html += '</div></div>';
+  html += '</div>';
   content.innerHTML = html;
 }
 

@@ -358,7 +358,7 @@ def api_get_archives():
 
 @app.route("/api/archives", methods=["POST"])
 def api_toggle_archive():
-    """切换归档状态。"""
+    """切换归档状态。支持显式 archive 参数。"""
     data = request.get_json(silent=True) or {}
     session_id = data.get("sessionId", "")
     if not session_id:
@@ -366,15 +366,28 @@ def api_toggle_archive():
     if not _is_valid_uuid(session_id):
         return _json_error("无效的会话 ID", 400)
 
+    # 支持显式的 archive 参数（用于批量归档）
+    force_archive = data.get("archive", None)
+
     archives = load_archives()
-    if archives.get(session_id):
+    if force_archive is True:
+        archives[session_id] = True
+        save_archives(archives)
+        return jsonify({"ok": True, "archived": True})
+    elif force_archive is False:
         archives.pop(session_id, None)
         save_archives(archives)
         return jsonify({"ok": True, "archived": False})
     else:
-        archives[session_id] = True
-        save_archives(archives)
-        return jsonify({"ok": True, "archived": True})
+        # 切换模式
+        if archives.get(session_id):
+            archives.pop(session_id, None)
+            save_archives(archives)
+            return jsonify({"ok": True, "archived": False})
+        else:
+            archives[session_id] = True
+            save_archives(archives)
+            return jsonify({"ok": True, "archived": True})
 
 
 @app.route("/api/export")
