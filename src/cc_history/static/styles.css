@@ -514,50 +514,237 @@ body {
 
 /* Stats view */
 .stats-view { padding: 24px; overflow-y: auto; flex: 1; }
-.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+.stats-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.stats-header h2 { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
 .stats-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 20px;
   text-align: center;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
 }
-.stats-card-value { font-size: 28px; font-weight: 700; color: var(--accent); }
-.stats-card-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-.stats-section { margin-bottom: 24px; }
-.stats-section-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; }
-.stats-bar-item { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-.stats-bar-name { font-size: 12px; color: var(--text-secondary); width: 180px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
-.stats-bar-track { flex: 1; height: 20px; background: var(--bg-subtle); border-radius: 4px; overflow: hidden; }
-.stats-bar-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.3s; min-width: 2px; }
-.stats-bar-value { font-size: 11px; color: var(--text-muted); width: 50px; flex-shrink: 0; text-align: left; }
+.stats-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+}
+.stats-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.stats-card-icon {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 12px;
+  background: var(--accent-light);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+.stats-card-icon svg { width: 20px; height: 20px; }
+.stats-card-value { font-size: 32px; font-weight: 700; color: var(--text-primary); letter-spacing: -1px; }
+.stats-card-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
+
+.stats-section { margin-bottom: 28px; }
+.stats-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.stats-section-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--accent);
+}
+.stats-section-icon svg { width: 18px; height: 18px; }
+.stats-section-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+
+.stats-card-sm {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.stats-card-sm-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--accent-light);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.stats-card-sm-icon svg { width: 18px; height: 18px; }
+.stats-card-sm-info { flex: 1; }
+.stats-card-sm-value { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+.stats-card-sm-label { font-size: 11px; color: var(--text-muted); }
 
 /* 30天趋势 */
-.stats-trend { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; }
-.stats-trend-bars { display: flex; align-items: flex-end; gap: 3px; height: 120px; }
+.stats-trend {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+}
+.stats-trend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.stats-trend-total { font-size: 13px; color: var(--text-muted); }
+.stats-trend-bars { display: flex; align-items: flex-end; gap: 4px; height: 140px; padding-top: 8px; }
 .stats-trend-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
-.stats-trend-bar { width: 100%; background: var(--accent); border-radius: 2px 2px 0 0; min-height: 2px; transition: height 0.3s; }
-.stats-trend-label { font-size: 9px; color: var(--text-muted); margin-top: 4px; }
+.stats-trend-bar {
+  width: 100%;
+  background: linear-gradient(180deg, var(--accent), var(--accent-dark));
+  border-radius: 3px 3px 0 0;
+  min-height: 4px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.stats-trend-bar:hover { opacity: 0.8; filter: brightness(1.1); }
+.stats-trend-label { font-size: 10px; color: var(--text-muted); margin-top: 8px; font-weight: 500; }
 
 /* 每小时分布 */
-.stats-hours { display: flex; align-items: flex-end; gap: 2px; height: 100px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px 8px 8px; }
+.stats-hours {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 120px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px 12px 12px;
+}
 .stats-hour-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
-.stats-hour-bar { width: 100%; background: var(--accent); border-radius: 2px 2px 0 0; min-height: 2px; transition: height 0.3s; opacity: 0.8; }
-.stats-hour-label { font-size: 9px; color: var(--text-muted); margin-top: 4px; }
+.stats-hour-bar {
+  width: 100%;
+  background: linear-gradient(180deg, var(--accent), var(--accent-dark));
+  border-radius: 3px 3px 0 0;
+  min-height: 4px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.stats-hour-bar:hover { opacity: 0.8; filter: brightness(1.1); }
+.stats-hour-label { font-size: 10px; color: var(--text-muted); margin-top: 8px; font-weight: 500; }
 
 /* 每周分布 */
-.stats-weekdays { display: flex; align-items: flex-end; gap: 8px; height: 100px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px 16px 8px; }
+.stats-weekdays {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  height: 120px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px 20px 12px;
+}
 .stats-weekday-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
-.stats-weekday-bar { width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; transition: height 0.3s; }
-.stats-weekday-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.stats-weekday-bar {
+  width: 100%;
+  background: linear-gradient(180deg, var(--accent), var(--accent-dark));
+  border-radius: 6px 6px 0 0;
+  min-height: 4px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.stats-weekday-bar:hover { opacity: 0.8; filter: brightness(1.1); }
+.stats-weekday-label { font-size: 11px; color: var(--text-muted); margin-top: 8px; font-weight: 500; }
 
 /* 工具使用 */
-.stats-tools { display: flex; flex-direction: column; gap: 8px; }
-.stats-tool-item { display: flex; align-items: center; gap: 12px; }
-.stats-tool-name { font-size: 12px; color: var(--text-secondary); width: 100px; flex-shrink: 0; text-align: right; font-weight: 500; }
-.stats-tool-track { flex: 1; height: 24px; background: var(--bg-subtle); border-radius: 4px; overflow: hidden; }
-.stats-tool-fill { height: 100%; border-radius: 4px; transition: width 0.3s; min-width: 2px; }
-.stats-tool-value { font-size: 12px; color: var(--text-primary); width: 80px; flex-shrink: 0; font-weight: 500; }
+.stats-tools { display: flex; flex-direction: column; gap: 12px; }
+.stats-tool-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: all 0.2s;
+}
+.stats-tool-item:hover { border-color: var(--accent); box-shadow: var(--shadow-sm); }
+.stats-tool-rank {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.stats-tool-rank.top { background: var(--accent); color: white; }
+.stats-tool-name { font-size: 13px; color: var(--text-primary); width: 100px; flex-shrink: 0; font-weight: 600; }
+.stats-tool-track { flex: 1; height: 28px; background: var(--bg-subtle); border-radius: 6px; overflow: hidden; }
+.stats-tool-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.5s ease;
+  min-width: 4px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+}
+.stats-tool-value {
+  font-size: 13px;
+  color: var(--text-primary);
+  width: 80px;
+  flex-shrink: 0;
+  font-weight: 600;
+  text-align: right;
+}
+.stats-tool-pct { font-size: 11px; color: var(--text-muted); font-weight: 400; }
+
+/* 项目消息排行 */
+.stats-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 10px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: all 0.2s;
+}
+.stats-bar-item:hover { border-color: var(--accent); }
+.stats-bar-name {
+  font-size: 12px;
+  color: var(--text-secondary);
+  width: 180px;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  font-weight: 500;
+}
+.stats-bar-track { flex: 1; height: 24px; background: var(--bg-subtle); border-radius: 6px; overflow: hidden; }
+.stats-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+  border-radius: 6px;
+  transition: width 0.5s ease;
+  min-width: 4px;
+}
+.stats-bar-value { font-size: 13px; color: var(--text-primary); width: 60px; flex-shrink: 0; text-align: right; font-weight: 600; }
 
 /* Skills & Plugins */
 .skills-plugins-view { padding: 24px; overflow-y: auto; flex: 1; }

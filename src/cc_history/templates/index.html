@@ -915,32 +915,61 @@ async function showStats() {
   try {
     const stats = await fetchJson('/api/stats');
 
-    // 工具使用总数
+    // 计算总数
     const toolTotal = Object.values(stats.toolUsage || {}).reduce((a, b) => a + b, 0);
-    const toolColors = ['#0891B2', '#06B6D4', '#22D3EE', '#67E8F9', '#A5F3FC', '#CFFAFE', '#164E63', '#155E75', '#0E7490', '#0C4A6E'];
+    const trendTotal = stats.trend.reduce((a, d) => a + d.count, 0);
+
+    // SVG 图标
+    const iconProject = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>';
+    const iconChat = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+    const iconMsg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+    const iconTrend = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>';
+    const iconClock = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>';
+    const iconCalendar = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>';
+    const iconTool = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>';
+    const iconBar = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>';
 
     let html = `<div class="stats-view">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-        <h2 style="font-size:18px;font-weight:700;color:var(--text-primary)">统计面板</h2>
+      <div class="stats-header">
+        <h2>统计面板</h2>
         <button class="btn-action" onclick="document.getElementById('content').innerHTML='<div class=\\'content-empty\\'><svg viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><path d=\\'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\\'></path></svg><div class=\\'content-empty-text\\'>选择一个会话开始查看</div></div>'">${iconBack} 返回</button>
       </div>
 
       <div class="stats-grid">
-        <div class="stats-card"><div class="stats-card-value">${stats.totalProjects}</div><div class="stats-card-label">项目</div></div>
-        <div class="stats-card"><div class="stats-card-value">${stats.totalSessions}</div><div class="stats-card-label">会话</div></div>
-        <div class="stats-card"><div class="stats-card-value">${stats.totalMessages}</div><div class="stats-card-label">消息</div></div>
+        <div class="stats-card">
+          <div class="stats-card-icon">${iconProject}</div>
+          <div class="stats-card-value">${stats.totalProjects}</div>
+          <div class="stats-card-label">项目</div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-card-icon">${iconChat}</div>
+          <div class="stats-card-value">${stats.totalSessions}</div>
+          <div class="stats-card-label">会话</div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-card-icon">${iconMsg}</div>
+          <div class="stats-card-value">${stats.totalMessages.toLocaleString()}</div>
+          <div class="stats-card-label">消息</div>
+        </div>
       </div>
 
       <!-- 30天趋势 -->
       <div class="stats-section">
-        <div class="stats-section-title">最近 30 天消息趋势</div>
+        <div class="stats-section-header">
+          <div class="stats-section-icon">${iconTrend}</div>
+          <div class="stats-section-title">最近 30 天消息趋势</div>
+        </div>
         <div class="stats-trend">
+          <div class="stats-trend-header">
+            <span></span>
+            <span class="stats-trend-total">共 ${trendTotal.toLocaleString()} 条消息</span>
+          </div>
           <div class="stats-trend-bars">`;
 
     const maxTrend = Math.max(...stats.trend.map(d => d.count), 1);
     for (const d of stats.trend) {
-      const h = Math.max(2, Math.round((d.count / maxTrend) * 100));
-      const day = d.date.slice(5); // MM-DD
+      const h = Math.max(4, Math.round((d.count / maxTrend) * 100));
+      const day = d.date.slice(5);
       html += `<div class="stats-trend-col" title="${d.date}: ${d.count}条">
         <div class="stats-trend-bar" style="height:${h}%"></div>
         <div class="stats-trend-label">${day.slice(-2)}</div>
@@ -951,14 +980,17 @@ async function showStats() {
 
       <!-- 每小时分布 -->
       <div class="stats-section">
-        <div class="stats-section-title">每小时活跃分布</div>
+        <div class="stats-section-header">
+          <div class="stats-section-icon">${iconClock}</div>
+          <div class="stats-section-title">每小时活跃分布</div>
+        </div>
         <div class="stats-hours">`;
 
     const maxHour = Math.max(...stats.hourly, 1);
     for (let h = 0; h < 24; h++) {
       const pct = Math.round((stats.hourly[h] / maxHour) * 100);
-      html += `<div class="stats-hour-col">
-        <div class="stats-hour-bar" style="height:${Math.max(2, pct)}%"></div>
+      html += `<div class="stats-hour-col" title="${h}:00 - ${h+1}:00: ${stats.hourly[h]}条">
+        <div class="stats-hour-bar" style="height:${Math.max(4, pct)}%"></div>
         <div class="stats-hour-label">${h}</div>
       </div>`;
     }
@@ -967,15 +999,18 @@ async function showStats() {
 
       <!-- 每周分布 -->
       <div class="stats-section">
-        <div class="stats-section-title">每周活跃分布</div>
+        <div class="stats-section-header">
+          <div class="stats-section-icon">${iconCalendar}</div>
+          <div class="stats-section-title">每周活跃分布</div>
+        </div>
         <div class="stats-weekdays">`;
 
     const weekNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
     const maxWeek = Math.max(...stats.weekday, 1);
     for (let d = 0; d < 7; d++) {
       const pct = Math.round((stats.weekday[d] / maxWeek) * 100);
-      html += `<div class="stats-weekday-col">
-        <div class="stats-weekday-bar" style="height:${Math.max(2, pct)}%"></div>
+      html += `<div class="stats-weekday-col" title="${weekNames[d]}: ${stats.weekday[d]}条">
+        <div class="stats-weekday-bar" style="height:${Math.max(4, pct)}%"></div>
         <div class="stats-weekday-label">${weekNames[d]}</div>
       </div>`;
     }
@@ -984,18 +1019,22 @@ async function showStats() {
 
       <!-- 工具使用 -->
       <div class="stats-section">
-        <div class="stats-section-title">工具使用排行（共 ${toolTotal} 次）</div>
+        <div class="stats-section-header">
+          <div class="stats-section-icon">${iconTool}</div>
+          <div class="stats-section-title">工具使用排行</div>
+        </div>
         <div class="stats-tools">`;
 
     const tools = Object.entries(stats.toolUsage || {});
     for (let i = 0; i < tools.length; i++) {
       const [name, count] = tools[i];
       const pct = Math.round((count / toolTotal) * 100);
-      const color = toolColors[i % toolColors.length];
+      const isTop = i < 3;
       html += `<div class="stats-tool-item">
+        <div class="stats-tool-rank ${isTop ? 'top' : ''}">${i + 1}</div>
         <div class="stats-tool-name">${escapeHtml(name)}</div>
-        <div class="stats-tool-track"><div class="stats-tool-fill" style="width:${pct}%;background:${color}"></div></div>
-        <div class="stats-tool-value">${count} <span style="color:var(--text-muted)">(${pct}%)</span></div>
+        <div class="stats-tool-track"><div class="stats-tool-fill" style="width:${pct}%"></div></div>
+        <div class="stats-tool-value">${count} <span class="stats-tool-pct">(${pct}%)</span></div>
       </div>`;
     }
 
@@ -1003,15 +1042,19 @@ async function showStats() {
 
       <!-- 项目消息排行 -->
       <div class="stats-section">
-        <div class="stats-section-title">项目消息排行</div>`;
+        <div class="stats-section-header">
+          <div class="stats-section-icon">${iconBar}</div>
+          <div class="stats-section-title">项目消息排行</div>
+        </div>`;
 
     const maxMsgs = Math.max(...stats.byProject.map(p => p.messages), 1);
     for (const p of stats.byProject) {
       const pct = Math.round((p.messages / maxMsgs) * 100);
+      const name = projectNames[p.name] || p.name;
       html += `<div class="stats-bar-item">
-        <div class="stats-bar-name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</div>
+        <div class="stats-bar-name" title="${escapeHtml(p.name)}">${escapeHtml(name)}</div>
         <div class="stats-bar-track"><div class="stats-bar-fill" style="width:${pct}%"></div></div>
-        <div class="stats-bar-value">${p.messages}</div>
+        <div class="stats-bar-value">${p.messages.toLocaleString()}</div>
       </div>`;
     }
 
